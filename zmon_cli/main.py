@@ -150,10 +150,10 @@ def get(url):
     return None
 
 
-def put(url):
+def put(url, body):
     data = get_config_data()
     try:
-        return requests.put(data['url']+url, None, auth=HTTPBasicAuth(data['user'], data['password']))
+        return requests.put(data['url']+url, data=body, auth=HTTPBasicAuth(data['user'], data['password']), headers={'content-type':'application/json'})
     except Exception as e:
         logging.error(e)
 
@@ -198,6 +198,42 @@ def update(yaml_file):
                       auth=HTTPBasicAuth(data['user'], data['password']), headers={'Content-Type': 'application/json'})
     print(r.text)
 
+
+def render_entities(key=None, value=''):
+    r = get('/entities/')
+    entities = r.json()
+    for e in entities:
+        s = sorted(e.keys())
+        for k in s:
+            print '{}={}'.format(k , e[k]),
+        print ''
+
+
+
+@cli.group("entities", invoke_without_command=True)
+@click.pass_context
+def entities(ctx):
+    if not ctx.invoked_subcommand:
+        render_entities()
+
+@entities.command("push")
+@click.argument("entity")
+@click.pass_context
+def push_entity(ctx, entity):
+    print entity
+    action("create or update entity...")
+    try:
+        r = put('/entities/', entity)
+        print r
+    except Exception as ex:
+        error("failed")
+
+@entities.command("filter")
+@click.argument("key")
+@click.argument("value")
+@click.pass_context
+def filter_entities(ctx, key, value):
+    render_entities(key, value)
 
 @cli.group(invoke_without_command=True)
 @click.pass_context

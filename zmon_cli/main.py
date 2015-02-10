@@ -203,12 +203,12 @@ def render_entities(key=None, value=''):
     r = get('/entities/')
     entities = r.json()
     for e in entities:
+        print "id="+e['id'],
         s = sorted(e.keys())
         for k in s:
-            print '{}={}'.format(k , e[k]),
+            if k != 'id':
+                print '{}={}'.format(k , e[k]),
         print ''
-
-
 
 @cli.group("entities", invoke_without_command=True)
 @click.pass_context
@@ -220,13 +220,29 @@ def entities(ctx):
 @click.argument("entity")
 @click.pass_context
 def push_entity(ctx, entity):
-    print entity
     action("create or update entity...")
     try:
         r = put('/entities/', entity)
-        print r
+        if r.status_code == 200:
+            ok()
+        else:
+            error()
     except Exception as ex:
         error("failed")
+
+@entities.command("delete")
+@click.argument("entity-id")
+@click.pass_context
+def push_entity(ctx, entity_id):
+    action("delete entity... {}".format(entity_id))
+    try:
+        r = delete('/entities/{}/'.format(entity_id))
+        if r.status_code == 200 and r.text == "1":
+            ok()
+        else:
+            error()
+    except Exception as ex:
+        error("failed to delete")
 
 @entities.command("filter")
 @click.argument("key")

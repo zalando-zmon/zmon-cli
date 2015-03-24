@@ -200,7 +200,11 @@ def update(yaml_file):
 
 
 def render_entities(key=None, value=''):
-    r = get('/entities/')
+    if key != None:
+        r = get('/entities/?query={}'.format(json.dumps({key:value})))
+    else:
+        r = get('/entities/')
+
     entities = r.json()
     for e in entities:
         print "id="+e['id'],

@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 import json
 import zmon_cli
+import urllib
 
 from zmon_cli.console import action, ok, error, highlight
 
@@ -237,16 +238,16 @@ def push_entity(ctx, entity):
 @entities.command("delete")
 @click.argument("entity-id")
 @click.pass_context
-def push_entity(ctx, entity_id):
+def delete_entity(ctx, entity_id):
     action("delete entity... {}".format(entity_id))
     try:
-        r = delete('/entities/{}/'.format(entity_id))
+        r = delete('/entities/?id={}'.format(urllib.quote_plus(entity_id)))
         if r.status_code == 200 and r.text == "1":
             ok()
         else:
-            error()
+            error("Delete unsuccessfull")
     except Exception as ex:
-        error("failed to delete")
+        error("Exception during delete: " + str(ex))
 
 @entities.command("filter")
 @click.argument("key")

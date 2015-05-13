@@ -225,7 +225,13 @@ def entities(ctx):
 @click.argument("entity")
 @click.pass_context
 def push_entity(ctx, entity):
-    action("create or update entity...")
+    if entity[-4:] == "json" and os.path.exists(entity):
+        action("create or update entity from file ...")
+        file = open(entity, 'rb')
+        entity = file.read()
+        file.close()
+    else:
+        action("create or update entity...")
     try:
         r = put('/entities/', entity)
         if r.status_code == 200:

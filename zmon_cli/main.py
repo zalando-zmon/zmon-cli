@@ -185,7 +185,7 @@ def check_definitions(ctx):
     pass
 
 
-@check_definitions.command()
+@check_definitions.command("update")
 @click.argument('yaml_file', type=click.File('rb'))
 def update(yaml_file):
     """update a single check definition"""

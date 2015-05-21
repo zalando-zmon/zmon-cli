@@ -199,6 +199,19 @@ def update(yaml_file):
                       auth=HTTPBasicAuth(data['user'], data['password']), headers={'Content-Type': 'application/json'})
     print(r.text)
 
+@check_definitions.command("get")
+@click.argument("check_id", type=int)
+def getCheckDefinition(check_id):
+
+    data = get('/check-definitions/{}'.format(check_id)).json()
+    del data['source_url']
+    keys = data.keys()
+    for k in keys:
+        if data[k] is None:
+            del data[k]
+
+    print yaml.safe_dump(data, default_flow_style=False, allow_unicode=True, encoding='utf-8')
+
 
 def render_entities(key=None, value=''):
     if key != None:

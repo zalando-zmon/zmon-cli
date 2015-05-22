@@ -154,7 +154,8 @@ def get(url):
 def put(url, body):
     data = get_config_data()
     try:
-        return requests.put(data['url']+url, data=body, auth=HTTPBasicAuth(data['user'], data['password']), headers={'content-type':'application/json'})
+        return requests.put(data['url']+url, data=body, auth=HTTPBasicAuth(data['user'], data['password']),
+                            headers={'content-type': 'application/json'})
     except Exception as e:
         logging.error(e)
 
@@ -199,6 +200,7 @@ def update(yaml_file):
                       auth=HTTPBasicAuth(data['user'], data['password']), headers={'Content-Type': 'application/json'})
     print(r.text)
 
+
 @check_definitions.command("get")
 @click.argument("check_id", type=int)
 def getCheckDefinition(check_id):
@@ -210,29 +212,31 @@ def getCheckDefinition(check_id):
         if data[k] is None:
             del data[k]
 
-    print yaml.safe_dump(data, default_flow_style=False, allow_unicode=True, encoding='utf-8')
+    print(yaml.safe_dump(data, default_flow_style=False, allow_unicode=True, encoding='utf-8'))
 
 
 def render_entities(key=None, value=''):
-    if key != None:
-        r = get('/entities/?query={}'.format(json.dumps({key:value})))
+    if key:
+        r = get('/entities/?query={}'.format(json.dumps({key: value})))
     else:
         r = get('/entities/')
 
     entities = r.json()
     for e in entities:
-        print "id="+e['id'],
+        print("id="+e['id'], end='')
         s = sorted(e.keys())
         for k in s:
             if k != 'id':
-                print '{}={}'.format(k , e[k]),
-        print ''
+                print('{}={}'.format(k, e[k]), end='')
+        print('')
+
 
 @cli.group("entities", invoke_without_command=True)
 @click.pass_context
 def entities(ctx):
     if not ctx.invoked_subcommand:
         render_entities()
+
 
 @entities.command("push")
 @click.argument("entity")
@@ -251,8 +255,9 @@ def push_entity(ctx, entity):
             ok()
         else:
             error()
-    except Exception as ex:
+    except:
         error("failed")
+
 
 @entities.command("delete")
 @click.argument("entity-id")
@@ -268,12 +273,14 @@ def delete_entity(ctx, entity_id):
     except Exception as ex:
         error("Exception during delete: " + str(ex))
 
+
 @entities.command("filter")
 @click.argument("key")
 @click.argument("value")
 @click.pass_context
 def filter_entities(ctx, key, value):
     render_entities(key, value)
+
 
 @cli.group(invoke_without_command=True)
 @click.pass_context

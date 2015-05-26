@@ -223,11 +223,11 @@ def render_entities(key=None, value=''):
 
     entities = r.json()
     for e in entities:
-        print("id="+e['id'], end='')
+        print("id="+e['id'], end=' ')
         s = sorted(e.keys())
         for k in s:
             if k != 'id':
-                print('{}={}'.format(k, e[k]), end='')
+                print('{}={}'.format(k, e[k]), end=' ')
         print('')
 
 

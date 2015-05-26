@@ -2,6 +2,26 @@
 ZMON CLI
 ========
 
+.. image:: https://travis-ci.org/zalando/zmon-cli.svg?branch=master
+   :target: https://travis-ci.org/zalando/zmon-cli
+   :alt: Build Status
+
+.. image:: https://coveralls.io/repos/zalando/zmon-cli/badge.svg
+   :target: https://coveralls.io/r/zalando/zmon-cli
+   :alt: Code Coverage
+
+.. image:: https://img.shields.io/pypi/dw/zmon-cli.svg
+   :target: https://pypi.python.org/pypi/zmon-cli/
+   :alt: PyPI Downloads
+
+.. image:: https://img.shields.io/pypi/v/zmon-cli.svg
+   :target: https://pypi.python.org/pypi/zmon-cli/
+   :alt: Latest PyPI version
+
+.. image:: https://img.shields.io/pypi/l/zmon-cli.svg
+   :target: https://pypi.python.org/pypi/zmon-cli/
+   :alt: License
+
 Requires Python 3.4.
 
 Installation

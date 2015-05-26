@@ -387,7 +387,7 @@ def status(config):
     workers = sorted(workers)
 
     action("Looking for <30s interval scheduler ...")
-    scheduler = filter(lambda x: x[:7] == 's-p3423', workers)
+    scheduler = list(filter(lambda x: x[:7] == 's-p3423', workers))
     if not scheduler:
         error("not found! check p3423")
     else:
@@ -395,7 +395,7 @@ def status(config):
         ok()
 
     action("Looking for >30s interval scheduler ...")
-    scheduler = filter(lambda x: x[:7] == 's-p3422', workers)
+    scheduler = list(filter(lambda x: x[:7] == 's-p3422', workers))
     if not scheduler:
         error("not found! check p3422")
     else:

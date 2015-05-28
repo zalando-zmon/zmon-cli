@@ -22,6 +22,8 @@ ZMON CLI
    :target: https://pypi.python.org/pypi/zmon-cli/
    :alt: License
 
+Command line client for the Zalando Monitoring solution (ZMON).
+
 Requires Python 3.4.
 
 Installation

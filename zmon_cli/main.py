@@ -206,13 +206,12 @@ def update(yaml_file):
 def getCheckDefinition(check_id):
 
     data = get('/check-definitions/{}'.format(check_id)).json()
-    del data['source_url']
-    keys = data.keys()
+    keys = list(data.keys())
     for k in keys:
         if data[k] is None:
             del data[k]
 
-    print(yaml.safe_dump(data, default_flow_style=False, allow_unicode=True, encoding='utf-8'))
+    print(yaml.safe_dump(data, default_flow_style=False, allow_unicode=True, encoding='utf-8').decode('utf-8'))
 
 
 def render_entities(key=None, value=''):

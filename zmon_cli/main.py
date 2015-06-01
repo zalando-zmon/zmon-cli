@@ -3,7 +3,8 @@ import json
 import zmon_cli
 import urllib
 
-from zmon_cli.console import action, ok, error, highlight
+from clickclick import action, ok, error, AliasedGroup
+from zmon_cli.console import highlight
 
 import click
 import logging
@@ -35,7 +36,7 @@ def configure_logging(loglevel):
     logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.WARNING)
 
 
-@click.group(invoke_without_command=True, context_settings=CONTEXT_SETTINGS)
+@click.group(cls=AliasedGroup, context_settings=CONTEXT_SETTINGS)
 @click.option('--config-file', help='Use alternative config file', default=DEFAULT_CONFIG_FILE, metavar='PATH')
 @click.option('-v', '--verbose', help='Verbose logging', is_flag=True)
 @click.option('-V', '--version', is_flag=True, callback=print_version, expose_value=False, is_eager=True)
@@ -201,9 +202,18 @@ def update(yaml_file):
     print(r.text)
 
 
+@check_definitions.command('init')
+@click.argument('yaml_file', type=click.File('wb'))
+def init(yaml_file):
+    '''Initialize a new check definition YAML file'''
+    data = {}
+    yaml.safe_dump(data, yaml_file)
+
+
 @check_definitions.command("get")
 @click.argument("check_id", type=int)
 def getCheckDefinition(check_id):
+    '''get a single check definition'''
 
     data = get('/check-definitions/{}'.format(check_id)).json()
     keys = list(data.keys())

@@ -1,9 +1,10 @@
 #!/usr/bin/env python2
 import json
+import textwrap
 import zmon_cli
 import urllib
 
-from clickclick import action, ok, error, AliasedGroup
+from clickclick import action, ok, error, AliasedGroup, print_table, OutputFormat
 from zmon_cli.console import highlight
 
 import click
@@ -19,6 +20,9 @@ from redis import StrictRedis
 DEFAULT_CONFIG_FILE = '~/.zmon-cli.yaml'
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+
+output_option = click.option('-o', '--output', type=click.Choice(['text', 'json', 'tsv']), default='text',
+                             help='Use alternative output format')
 
 
 def print_version(ctx, param, value):
@@ -206,8 +210,21 @@ def update(yaml_file):
 @click.argument('yaml_file', type=click.File('wb'))
 def init(yaml_file):
     '''Initialize a new check definition YAML file'''
-    data = {}
-    yaml.safe_dump(data, yaml_file)
+    template = textwrap.dedent('''
+    status: ACTIVE
+    name: "{name}"
+    description: "Example ZMON check definition which returns a HTTP status code"
+    owning_team: "{owning_team}"
+    interval: 60 # seconds
+    command: |
+      http('http://example.org/', timeout=5).code()
+    entities:
+      - type: GLOBAL
+    ''')
+    name = click.prompt('Check definition name', default='Example Check')
+    owning_team = click.prompt('Team owning this check definition (i.e. your team)', default='Example Team')
+    data = template.format(name=name, owning_team=owning_team)
+    yaml_file.write(data.encode('utf-8'))
 
 
 @check_definitions.command("get")
@@ -224,27 +241,35 @@ def getCheckDefinition(check_id):
     print(yaml.safe_dump(data, default_flow_style=False, allow_unicode=True, encoding='utf-8').decode('utf-8'))
 
 
-def render_entities(key=None, value=''):
+def render_entities(output, key=None, value=''):
     if key:
         r = get('/entities/?query={}'.format(json.dumps({key: value})))
     else:
         r = get('/entities/')
 
     entities = r.json()
+    rows = []
     for e in entities:
-        print("id="+e['id'], end=' ')
+        row = e
         s = sorted(e.keys())
+        key_values = []
         for k in s:
-            if k != 'id':
-                print('{}={}'.format(k, e[k]), end=' ')
-        print('')
+            if k not in ('id', 'type'):
+                key_values.append('{}={}'.format(k, e[k]))
+        row['data'] = ' '.join(key_values)
+        rows.append(row)
+
+    rows.sort(key=lambda r: (r['id'], r['type']))
+    with OutputFormat(output):
+        print_table('id type data'.split(), rows)
 
 
 @cli.group("entities", invoke_without_command=True)
 @click.pass_context
-def entities(ctx):
+@output_option
+def entities(ctx, output):
     if not ctx.invoked_subcommand:
-        render_entities()
+        render_entities(output)
 
 
 @entities.command("push")
@@ -287,8 +312,10 @@ def delete_entity(ctx, entity_id):
 @click.argument("key")
 @click.argument("value")
 @click.pass_context
-def filter_entities(ctx, key, value):
-    render_entities(key, value)
+@output_option
+def filter_entities(ctx, key, value, output):
+    '''List entities filtered by a certain key'''
+    render_entities(output, key, value)
 
 
 @cli.group(invoke_without_command=True)

@@ -278,9 +278,8 @@ def entities(ctx, output):
 def push_entity(ctx, entity):
     if entity[-4:] == "json" and os.path.exists(entity):
         action("create or update entity from file ...")
-        file = open(entity, 'rb')
-        entity = file.read()
-        file.close()
+        with open(entity, 'rb') as file:
+            entity = file.read()
     else:
         action("create or update entity...")
     try:

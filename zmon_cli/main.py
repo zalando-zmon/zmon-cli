@@ -180,9 +180,81 @@ def delete(url):
 @cli.group()
 @click.pass_context
 def members(ctx):
-    """manage group membership"""
+    """Manage group membership"""
     pass
 
+@cli.group('alert-definitions')
+@click.pass_context
+def alert_definitions(ctx):
+    """Manage alert definitions"""
+    pass
+
+@alert_definitions.command('init')
+@click.argument('yaml_file', type=click.File('wb'))
+def init(yaml_file):
+    '''Initialize a new alert definition YAML file'''
+    template = textwrap.dedent('''
+    check_definition_id: {check_id}
+    id:
+    status: ACTIVE
+    name: "{name}"
+    description: "Example Alert Description"
+    team: "{team}"
+    responsible_team: "{team}"
+    condition: |
+      >100
+    entities:
+    entities_exclude:
+    status: ACTIVE
+    priority: 2
+    tags:
+    parent_id:
+    parameters:
+    ''')
+    name = click.prompt('Alert name', default='Example Alert')
+    check_id = click.prompt('Check ID')
+    team = click.prompt('(Responsible-) Team', default='Example Team')
+    data = template.format(name=name, team=team,check_id=check_id)
+    yaml_file.write(data.encode('utf-8'))
+
+@alert_definitions.command('get')
+@click.argument("alert_id", type=int)
+def getAlertDefinition(alert_id):
+    '''Get a single alert definition'''
+
+    data = get('/alert-definitions/{}'.format(alert_id)).json()
+    keys = list(data.keys())
+    for k in keys:
+        if data[k] is None:
+            del data[k]
+
+    print(yaml.safe_dump(data, default_flow_style=False, allow_unicode=True, encoding='utf-8').decode('utf-8'))
+
+@alert_definitions.command("update")
+@click.argument('yaml_file', type=click.File('rb'))
+def updateAlertDef(yaml_file):
+    """update a single check definition"""
+    data = get_config_data()
+    post = yaml.safe_load(yaml_file)
+    post['last_modified_by'] = data['user']
+    if 'status' not in post:
+        post['status'] = 'ACTIVE'
+
+    action('Updating alert definition..')
+
+    if not 'id' in post:
+        error('"id" missing in definition')
+        return
+
+    if not 'check_definition_id' in post:
+        error('"check_definition_id" missing in definition')
+        return
+
+    alert_id = post['id']
+
+    r = requests.put(data['url'] + '/alert-definitions/{}'.format(alert_id), json.dumps(post),
+                      auth=HTTPBasicAuth(data['user'], data['password']), headers={'Content-Type': 'application/json'})
+    print(r.text)
 
 @cli.group('check-definitions')
 @click.pass_context

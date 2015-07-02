@@ -257,7 +257,7 @@ def updateAlertDef(yaml_file):
     if r.status_code == 200:
         ok(get_config_data()["url"].replace("rest/api/v1","")+"#/alert-details/"+str(r.json()["id"]))
     else:
-        print r.text
+        print(r.text)
 
 @cli.group('check-definitions')
 @click.pass_context
@@ -281,7 +281,7 @@ def update(yaml_file):
     if r.status_code == 200:
         ok(get_config_data()["url"].replace("rest/api/v1","")+"#/check-definitions/view/"+str(r.json()["id"]))
     else:
-        print r.text
+        print(r.text)
 
 
 @check_definitions.command('init')

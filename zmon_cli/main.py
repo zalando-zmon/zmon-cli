@@ -254,7 +254,8 @@ def updateAlertDef(yaml_file):
 
     r = requests.put(data['url'] + '/alert-definitions/{}'.format(alert_id), json.dumps(post),
                       auth=HTTPBasicAuth(data['user'], data['password']), headers={'Content-Type': 'application/json'})
-    print(r.text)
+    if r.status_code == 200:
+        ok(get_config_data()["url"].replace("rest/api/v1","")+"#/alert-details/"+str(r.json()["id"]))
 
 @cli.group('check-definitions')
 @click.pass_context
@@ -272,10 +273,11 @@ def update(yaml_file):
     post['last_modified_by'] = data['user']
     if 'status' not in post:
         post['status'] = 'ACTIVE'
-    action('Updating check definition..')
+    action('Updating check definition... ')
     r = requests.post(data['url'] + '/check-definitions', json.dumps(post),
                       auth=HTTPBasicAuth(data['user'], data['password']), headers={'Content-Type': 'application/json'})
-    print(r.text)
+    if r.status_code == 200:
+        ok(get_config_data()["url"].replace("rest/api/v1","")+"#/check-definitions/view/"+str(r.json()["id"]))
 
 
 @check_definitions.command('init')

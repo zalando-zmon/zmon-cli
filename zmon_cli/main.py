@@ -502,7 +502,7 @@ def status(config):
 
     print("")
 
-    workers = sorted(workers)
+    workers = list(map(lambda x: x.decode(), sorted(workers)))
 
     action("Looking for <30s interval scheduler ...")
     scheduler = list(filter(lambda x: x[:7] == 's-p3423', workers))
@@ -520,13 +520,29 @@ def status(config):
         action("... running {}".format(scheduler[0][2:]))
         ok()
 
+    action("Looking for NG scheduler ...")
+    scheduler = list(filter(lambda x: x == 's-p3421.monitor02', workers))
+    if not scheduler:
+        error("not found! check p3421 on monitor02")
+    else:
+        action("... running {}".format(scheduler[0][2:]))
+        ok()
+
+    action("Looking for self monitoring scheduler ...")
+    scheduler = list(filter(lambda x: x == 's-p3421.itr-monitor01', workers))
+    if not scheduler:
+        error("not found! check p3411 on itr-monitor02")
+    else:
+        action("... running {}".format(scheduler[0][2:]))
+        ok()
+
     print("")
 
     ws = []
     ss = []
 
     for w in workers:
-        if w[:2] == b"s-":
+        if w[:2] == "s-":
             ss.append(w)
         else:
             ws.append(w)

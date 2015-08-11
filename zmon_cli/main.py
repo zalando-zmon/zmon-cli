@@ -139,9 +139,17 @@ def get_config_data():
     if os.path.exists(fn):
         with open(fn) as fd:
             data = yaml.safe_load(fd)
+    else:
+        raise Exception("Config file not found: ~/.zmon-cli.yaml")
 
+    return validate_config(data)
+
+
+def validate_config(data):
     if "user" not in data or "password" not in data:
-        raise Exception("Config file not found/properly configured: ~/.zmon-cli.yaml with user: and password:")
+        raise Exception("Config file not properly configured: keys 'user' and 'password' are missing")
+    if "url" not in data:
+        raise Exception("Config file not properly configured: key 'url' is missing")
 
     return data
 

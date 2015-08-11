@@ -140,10 +140,10 @@ def get_config_data():
         with open(fn) as fd:
             data = yaml.safe_load(fd)
 
-            if "user" not in data or "password" not in data:
-                raise Exception("Config file not found/properly configured: ~/.zmon-cli.yaml with user: and password:")
+    if "user" not in data or "password" not in data:
+        raise Exception("Config file not found/properly configured: ~/.zmon-cli.yaml with user: and password:")
 
-        return data
+    return data
 
 
 def get(url):

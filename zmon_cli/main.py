@@ -157,7 +157,7 @@ def validate_config(data):
 def get(url):
     data = get_config_data()
     try:
-        return requests.get(data['url']+url, auth=HTTPBasicAuth(data['user'], data['password']))
+        return requests.get(data['url'] + url, auth=HTTPBasicAuth(data['user'], data['password']))
     except Exception as e:
         logging.error(e)
 
@@ -167,7 +167,7 @@ def get(url):
 def put(url, body):
     data = get_config_data()
     try:
-        return requests.put(data['url']+url, data=body, auth=HTTPBasicAuth(data['user'], data['password']),
+        return requests.put(data['url'] + url, data=body, auth=HTTPBasicAuth(data['user'], data['password']),
                             headers={'content-type': 'application/json'})
     except Exception as e:
         logging.error(e)
@@ -178,7 +178,7 @@ def put(url, body):
 def delete(url):
     data = get_config_data()
     try:
-        return requests.delete(data['url']+url, auth=HTTPBasicAuth(data['user'], data['password']))
+        return requests.delete(data['url'] + url, auth=HTTPBasicAuth(data['user'], data['password']))
     except Exception as e:
         logging.error(e)
 
@@ -191,11 +191,13 @@ def members(ctx):
     """Manage group membership"""
     pass
 
+
 @cli.group('alert-definitions')
 @click.pass_context
 def alert_definitions(ctx):
     """Manage alert definitions"""
     pass
+
 
 @alert_definitions.command('init')
 @click.argument('yaml_file', type=click.File('wb'))
@@ -222,8 +224,9 @@ def init(yaml_file):
     name = click.prompt('Alert name', default='Example Alert')
     check_id = click.prompt('Check ID')
     team = click.prompt('(Responsible-) Team', default='Example Team')
-    data = template.format(name=name, team=team,check_id=check_id)
+    data = template.format(name=name, team=team, check_id=check_id)
     yaml_file.write(data.encode('utf-8'))
+
 
 @alert_definitions.command('get')
 @click.argument("alert_id", type=int)
@@ -237,6 +240,7 @@ def getAlertDefinition(alert_id):
             del data[k]
 
     print(yaml.safe_dump(data, default_flow_style=False, allow_unicode=True, encoding='utf-8').decode('utf-8'))
+
 
 @alert_definitions.command("update")
 @click.argument('yaml_file', type=click.File('rb'))
@@ -261,11 +265,12 @@ def updateAlertDef(yaml_file):
     alert_id = post['id']
 
     r = requests.put(data['url'] + '/alert-definitions/{}'.format(alert_id), json.dumps(post),
-                      auth=HTTPBasicAuth(data['user'], data['password']), headers={'Content-Type': 'application/json'})
+                     auth=HTTPBasicAuth(data['user'], data['password']), headers={'Content-Type': 'application/json'})
     if r.status_code == 200:
-        ok(get_config_data()["url"].replace("rest/api/v1","")+"#/alert-details/"+str(r.json()["id"]))
+        ok(get_config_data()["url"].replace("rest/api/v1", "") + "#/alert-details/" + str(r.json()["id"]))
     else:
         print(r.text)
+
 
 @cli.group('check-definitions')
 @click.pass_context
@@ -287,7 +292,7 @@ def update(yaml_file):
     r = requests.post(data['url'] + '/check-definitions', json.dumps(post),
                       auth=HTTPBasicAuth(data['user'], data['password']), headers={'Content-Type': 'application/json'})
     if r.status_code == 200:
-        ok(get_config_data()["url"].replace("rest/api/v1","")+"#/check-definitions/view/"+str(r.json()["id"]))
+        ok(get_config_data()["url"].replace("rest/api/v1", "") + "#/check-definitions/view/" + str(r.json()["id"]))
     else:
         print(r.text)
 

@@ -183,11 +183,13 @@ def members(ctx):
     """Manage group membership"""
     pass
 
+
 @cli.group('alert-definitions')
 @click.pass_context
 def alert_definitions(ctx):
     """Manage alert definitions"""
     pass
+
 
 @alert_definitions.command('init')
 @click.argument('yaml_file', type=click.File('wb'))
@@ -214,8 +216,9 @@ def init(yaml_file):
     name = click.prompt('Alert name', default='Example Alert')
     check_id = click.prompt('Check ID')
     team = click.prompt('(Responsible-) Team', default='Example Team')
-    data = template.format(name=name, team=team,check_id=check_id)
+    data = template.format(name=name, team=team, check_id=check_id)
     yaml_file.write(data.encode('utf-8'))
+
 
 @alert_definitions.command('get')
 @click.argument("alert_id", type=int)
@@ -230,6 +233,7 @@ def getAlertDefinition(alert_id):
 
     print(yaml.safe_dump(data, default_flow_style=False, allow_unicode=True, encoding='utf-8').decode('utf-8'))
 
+
 @alert_definitions.command("update")
 @click.argument('yaml_file', type=click.File('rb'))
 def updateAlertDef(yaml_file):
@@ -242,22 +246,23 @@ def updateAlertDef(yaml_file):
 
     action('Updating alert definition..')
 
-    if not 'id' in post:
+    if 'id' not in post:
         error('"id" missing in definition')
         return
 
-    if not 'check_definition_id' in post:
+    if 'check_definition_id' not in post:
         error('"check_definition_id" missing in definition')
         return
 
     alert_id = post['id']
 
     r = requests.put(data['url'] + '/alert-definitions/{}'.format(alert_id), json.dumps(post),
-                      auth=HTTPBasicAuth(data['user'], data['password']), headers={'Content-Type': 'application/json'})
+                     auth=HTTPBasicAuth(data['user'], data['password']), headers={'Content-Type': 'application/json'})
     if r.status_code == 200:
-        ok(get_config_data()["url"].replace("rest/api/v1","")+"#/alert-details/"+str(r.json()["id"]))
+        ok(get_config_data()["url"].replace("rest/api/v1", "") + "#/alert-details/" + str(r.json()["id"]))
     else:
         print(r.text)
+
 
 @cli.group('check-definitions')
 @click.pass_context
@@ -279,14 +284,14 @@ def update(yaml_file):
     r = requests.post(data['url'] + '/check-definitions', json.dumps(post),
                       auth=HTTPBasicAuth(data['user'], data['password']), headers={'Content-Type': 'application/json'})
     if r.status_code == 200:
-        ok(get_config_data()["url"].replace("rest/api/v1","")+"#/check-definitions/view/"+str(r.json()["id"]))
+        ok(get_config_data()["url"].replace("rest/api/v1", "") + "#/check-definitions/view/" + str(r.json()["id"]))
     else:
         print(r.text)
 
 
 @check_definitions.command('init')
 @click.argument('yaml_file', type=click.File('wb'))
-def init(yaml_file):
+def init_check_definition(yaml_file):
     '''Initialize a new check definition YAML file'''
     template = textwrap.dedent('''
     status: ACTIVE

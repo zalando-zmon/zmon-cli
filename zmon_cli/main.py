@@ -139,9 +139,17 @@ def get_config_data():
     if os.path.exists(fn):
         with open(fn) as fd:
             data = yaml.safe_load(fd)
+    else:
+        raise Exception("Config file not found: ~/.zmon-cli.yaml")
 
+    return validate_config(data)
+
+
+def validate_config(data):
     if "user" not in data or "password" not in data:
-        raise Exception("Config file not found/properly configured: ~/.zmon-cli.yaml with user: and password:")
+        raise Exception("Config file not properly configured: keys 'user' and 'password' are missing")
+    if "url" not in data:
+        raise Exception("Config file not properly configured: key 'url' is missing")
 
     return data
 
@@ -149,7 +157,7 @@ def get_config_data():
 def get(url):
     data = get_config_data()
     try:
-        return requests.get(data['url']+url, auth=HTTPBasicAuth(data['user'], data['password']))
+        return requests.get(data['url'] + url, auth=HTTPBasicAuth(data['user'], data['password']))
     except Exception as e:
         logging.error(e)
 
@@ -159,7 +167,7 @@ def get(url):
 def put(url, body):
     data = get_config_data()
     try:
-        return requests.put(data['url']+url, data=body, auth=HTTPBasicAuth(data['user'], data['password']),
+        return requests.put(data['url'] + url, data=body, auth=HTTPBasicAuth(data['user'], data['password']),
                             headers={'content-type': 'application/json'})
     except Exception as e:
         logging.error(e)
@@ -170,7 +178,7 @@ def put(url, body):
 def delete(url):
     data = get_config_data()
     try:
-        return requests.delete(data['url']+url, auth=HTTPBasicAuth(data['user'], data['password']))
+        return requests.delete(data['url'] + url, auth=HTTPBasicAuth(data['user'], data['password']))
     except Exception as e:
         logging.error(e)
 

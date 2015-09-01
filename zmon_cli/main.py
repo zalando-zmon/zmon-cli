@@ -409,7 +409,9 @@ def get_entity(ctx, entity_id):
     try:
         r = get('/entities/{}/'.format(urllib.parse.quote_plus(entity_id)))
         if r.status_code == 200 and r.text != "":            
-            print(yaml.safe_dump(r.json(), default_flow_style=False, allow_unicode=True, encoding='utf-8').decode('utf-8'))
+            print(yaml.safe_dump(r.json(), default_flow_style=False,
+                                           allow_unicode=True,
+                                           encoding='utf-8').decode('utf-8'))
         else:
             action("getting entity "+entity_id+ "...")
             error("not found")

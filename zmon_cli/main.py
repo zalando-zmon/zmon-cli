@@ -15,6 +15,8 @@ from requests.auth import HTTPBasicAuth
 import yaml
 import time
 
+import keyring
+
 from redis import StrictRedis
 
 DEFAULT_CONFIG_FILE = '~/.zmon-cli.yaml'
@@ -133,47 +135,82 @@ def check_workers(r, workers):
             error(e)
 
 
+def query_password(user):
+    pw = click.prompt("Password for {}".format(user), hide_input=True)
+    keyring.set_password("zmon-cli", user, pw)
+    return pw
+
+
 def get_config_data():
     fn = os.path.expanduser(DEFAULT_CONFIG_FILE)
     data = {}
-    if os.path.exists(fn):
-        with open(fn) as fd:
-            data = yaml.safe_load(fd)
-    else:
-        raise Exception("Config file not found: ~/.zmon-cli.yaml")
+    try:
+        if os.path.exists(fn):
+            with open(fn) as fd:
+                data = yaml.safe_load(fd)
+            if 'password' in data:
+                keyring.set_password("zmon-cli", data['user'], data['password'])
+                del data['password']
+                with open(fn, mode='w') as fd:
+                    yaml.safe_dump(data, fd)
+        else:
+            click.secho("No configuration file found at [%s]".format(DEFAULT_CONFIG_FILE), fg="yellow")
+            data['url'] = click.prompt("ZMon Base URL (e.g. https://zmon2.local/rest/api/v1)")
+            data['user'] = click.prompt("ZMon username", default=os.environ['USER'])
+
+            with open(fn, mode='w') as fd:
+                yaml.safe_dump(data, fd)
+    except Exception as e:
+        error(e)
 
     return validate_config(data)
 
 
 def validate_config(data):
-    if "user" not in data or "password" not in data:
-        raise Exception("Config file not properly configured: keys 'user' and 'password' are missing")
+    if "user" not in data:
+        raise Exception("Config file not properly configured: key 'user' is missing")
     if "url" not in data:
         raise Exception("Config file not properly configured: key 'url' is missing")
+
+    data['password'] = keyring.get_password('zmon-cli', data['user'])
+    if data['password'] is None:
+        data['password'] = query_password(data['user'])
 
     return data
 
 
 def get(url):
     data = get_config_data()
-    r = requests.get(data['url'] + url, auth=HTTPBasicAuth(data['user'], data['password']))
-    r.raise_for_status()
-    return r
+    response = requests.get(data['url'] + url, auth=HTTPBasicAuth(data['user'], data['password']))
+    if response.status_code == 401:
+        click.secho("Authorization failed", fg='red')
+        data['password'] = query_password(data['user'])
+        return get(url)
+    response.raise_for_status()
+    return response
 
 
 def put(url, body):
     data = get_config_data()
-    r = requests.put(data['url'] + url, data=body, auth=HTTPBasicAuth(data['user'], data['password']),
-                     headers={'content-type': 'application/json'})
-    r.raise_for_status()
-    return r
+    response = requests.put(data['url'] + url, data=body, auth=HTTPBasicAuth(data['user'], data['password']),
+                            headers={'content-type': 'application/json'})
+    if response.status_code == 401:
+        click.secho("Authorization failed", fg='red')
+        data['password'] = query_password(data['user'])
+        return get(url)
+    response.raise_for_status()
+    return response
 
 
 def delete(url):
     data = get_config_data()
-    r = requests.delete(data['url'] + url, auth=HTTPBasicAuth(data['user'], data['password']))
-    r.raise_for_status()
-    return r
+    response = requests.delete(data['url'] + url, auth=HTTPBasicAuth(data['user'], data['password']))
+    if response.status_code == 401:
+        click.secho("Authorization failed", fg='red')
+        data['password'] = query_password(data['user'])
+        return delete(url)
+    response.raise_for_status()
+    return response
 
 
 @cli.group()
@@ -255,8 +292,7 @@ def updateAlertDef(yaml_file):
 
     alert_id = post['id']
 
-    r = requests.put(data['url'] + '/alert-definitions/{}'.format(alert_id), json.dumps(post),
-                     auth=HTTPBasicAuth(data['user'], data['password']), headers={'Content-Type': 'application/json'})
+    r = put('/alert-definitions/{}'.format(alert_id), json.dumps(post))
     if r.status_code != 200:
         error(r.text)
     r.raise_for_status()
@@ -280,8 +316,7 @@ def update(yaml_file):
     if 'status' not in post:
         post['status'] = 'ACTIVE'
     action('Updating check definition... ')
-    r = requests.post(data['url'] + '/check-definitions', json.dumps(post),
-                      auth=HTTPBasicAuth(data['user'], data['password']), headers={'Content-Type': 'application/json'})
+    r = post('/check-definitions', json.dumps(post))
     if r.status_code != 200:
         error(r.text)
     r.raise_for_status()

@@ -325,7 +325,7 @@ def getCheckDefinition(check_id):
 
     r = get('/check-definitions/{}'.format(check_id))
 
-    if r.status != 200 or r.text == "":
+    if r.status_code != 200 or r.text == "":
         action("retrieving check " + str(check_id) + " ...")
         error("not found")
         return

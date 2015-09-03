@@ -323,7 +323,15 @@ def init_check_definition(yaml_file):
 def getCheckDefinition(check_id):
     '''get a single check definition'''
 
-    data = get('/check-definitions/{}'.format(check_id)).json()
+    r = get('/check-definitions/{}'.format(check_id))
+
+    if r.status != 200 or r.text == "":
+        action("retrieving check " + str(check_id) + " ...")
+        error("not found")
+        return
+
+    data = r.json()
+
     keys = list(data.keys())
     for k in keys:
         if data[k] is None:

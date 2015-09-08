@@ -368,24 +368,29 @@ def entities(ctx, output):
 @click.pass_context
 def push_entity(ctx, entity):
     if entity[-4:] == "json" and os.path.exists(entity):
-        action("create or update entity from json ...")
         with open(entity, 'rb') as file:
             entity = file.read()
+            data = json.loads(entity.decode())
     elif entity[-4:] == 'yaml' and os.path.exists(entity):
-        action("create or update entity from yaml ...")
         with open(entity, 'rb') as fd:
             data = yaml.safe_load(fd)
-            entity = json.dumps(data)
     else:
-        action("create or update entity...")
-    try:
-        r = put('/entities/', entity)
-        if r.status_code == 200:
-            ok()
-        else:
-            error()
-    except:
-        error("failed")
+        data = json.loads(entity)
+
+    if not isinstance(data, list):
+        data = [data]
+
+    for e in data:
+        action("creating entity...{}".format(e['id']))
+        try:
+            entity = json.dumps(e)
+            r = put('/entities/', entity)
+            if r.status_code == 200:
+                ok()
+            else:
+                error()
+        except:
+            error("failed")
 
 
 @entities.command("delete")

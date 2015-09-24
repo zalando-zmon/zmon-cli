@@ -33,8 +33,13 @@ Installation
 
     $ sudo pip3 install --upgrade zmon-cli
 
-Usage
-=====
+Documentation
+=============
+
+  http://zmon.readthedocs.org/en/latest/zmon-cli.html
+
+Example
+=======
 
 Creating or updating a single check definition from its YAML file:
 

@@ -164,7 +164,7 @@ def get(url):
 def put(url, body):
     data = get_config_data()
     r = requests.put(data['url'] + url, data=body, auth=HTTPBasicAuth(data['user'], data['password']),
-                            headers={'content-type': 'application/json'})
+                     headers={'content-type': 'application/json'})
     r.raise_for_status()
     return r
 

@@ -156,33 +156,24 @@ def validate_config(data):
 
 def get(url):
     data = get_config_data()
-    try:
-        return requests.get(data['url'] + url, auth=HTTPBasicAuth(data['user'], data['password']))
-    except Exception as e:
-        logging.error(e)
-
-    return None
+    r = requests.get(data['url'] + url, auth=HTTPBasicAuth(data['user'], data['password']))
+    r.raise_for_status()
+    return r
 
 
 def put(url, body):
     data = get_config_data()
-    try:
-        return requests.put(data['url'] + url, data=body, auth=HTTPBasicAuth(data['user'], data['password']),
+    r = requests.put(data['url'] + url, data=body, auth=HTTPBasicAuth(data['user'], data['password']),
                             headers={'content-type': 'application/json'})
-    except Exception as e:
-        logging.error(e)
-
-    return None
+    r.raise_for_status()
+    return r
 
 
 def delete(url):
     data = get_config_data()
-    try:
-        return requests.delete(data['url'] + url, auth=HTTPBasicAuth(data['user'], data['password']))
-    except Exception as e:
-        logging.error(e)
-
-    return None
+    r = requests.delete(data['url'] + url, auth=HTTPBasicAuth(data['user'], data['password']))
+    r.raise_for_status()
+    return r
 
 
 @cli.group()

@@ -8,3 +8,5 @@ build
 coverage.xml
 junit.xml
 *.egg*
+.cache/
+htmlcov/

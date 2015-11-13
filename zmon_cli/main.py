@@ -532,9 +532,31 @@ def set_name(ctx, member_email, member_name):
 @click.pass_obj
 def status(config):
     """check system status"""
-    redis, workers = check_redis_host(config['redis_host'], 6379)
+    if 'redis_host_master' not in config or 'redis_host_slave' not in config:
+        error("Please set redis_host_master and redis_host_slave in zmon cli config file!")
+        exit(-1)
+
+    redis_master, workers = check_redis_host(config['redis_host_master'], 6379)
+
+    redis_slave, workers = check_redis_host(config['redis_host_slave'], 6379)
 
     print("")
+
+    try:
+        action("Verifying write to master...")
+        ts = str(time.time())
+
+        redis_master.set("status-test", ts)
+        ts2 = redis_master.get("status-test").decode()
+
+        if ts == ts2:
+            ok()
+        else:
+            error("read != write (check Redis logs)")
+    except Exception:
+        error("could not write to Redis!")
+
+    print ("")
 
     workers = list(map(lambda x: x.decode(), sorted(workers)))
 
@@ -581,13 +603,13 @@ def status(config):
         else:
             ws.append(w)
 
-    check_schedulers(redis, ss)
+    check_schedulers(redis_slave, ss)
     print("")
 
-    check_queues(redis)
+    check_queues(redis_slave)
     print("")
 
-    check_workers(redis, ws)
+    check_workers(redis_slave, ws)
 
 
 @cli.command()

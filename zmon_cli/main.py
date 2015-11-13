@@ -156,33 +156,24 @@ def validate_config(data):
 
 def get(url):
     data = get_config_data()
-    try:
-        return requests.get(data['url'] + url, auth=HTTPBasicAuth(data['user'], data['password']))
-    except Exception as e:
-        logging.error(e)
-
-    return None
+    r = requests.get(data['url'] + url, auth=HTTPBasicAuth(data['user'], data['password']))
+    r.raise_for_status()
+    return r
 
 
 def put(url, body):
     data = get_config_data()
-    try:
-        return requests.put(data['url'] + url, data=body, auth=HTTPBasicAuth(data['user'], data['password']),
-                            headers={'content-type': 'application/json'})
-    except Exception as e:
-        logging.error(e)
-
-    return None
+    r = requests.put(data['url'] + url, data=body, auth=HTTPBasicAuth(data['user'], data['password']),
+                     headers={'content-type': 'application/json'})
+    r.raise_for_status()
+    return r
 
 
 def delete(url):
     data = get_config_data()
-    try:
-        return requests.delete(data['url'] + url, auth=HTTPBasicAuth(data['user'], data['password']))
-    except Exception as e:
-        logging.error(e)
-
-    return None
+    r = requests.delete(data['url'] + url, auth=HTTPBasicAuth(data['user'], data['password']))
+    r.raise_for_status()
+    return r
 
 
 @cli.group()
@@ -266,10 +257,10 @@ def updateAlertDef(yaml_file):
 
     r = requests.put(data['url'] + '/alert-definitions/{}'.format(alert_id), json.dumps(post),
                      auth=HTTPBasicAuth(data['user'], data['password']), headers={'Content-Type': 'application/json'})
-    if r.status_code == 200:
-        ok(get_config_data()["url"].replace("rest/api/v1", "") + "#/alert-details/" + str(r.json()["id"]))
-    else:
-        print(r.text)
+    if r.status_code != 200:
+        error(r.text)
+    r.raise_for_status()
+    ok(get_config_data()["url"].replace("rest/api/v1", "") + "#/alert-details/" + str(r.json()["id"]))
 
 
 @cli.group('check-definitions')
@@ -291,10 +282,10 @@ def update(yaml_file):
     action('Updating check definition... ')
     r = requests.post(data['url'] + '/check-definitions', json.dumps(post),
                       auth=HTTPBasicAuth(data['user'], data['password']), headers={'Content-Type': 'application/json'})
-    if r.status_code == 200:
-        ok(get_config_data()["url"].replace("rest/api/v1", "") + "#/check-definitions/view/" + str(r.json()["id"]))
-    else:
-        print(r.text)
+    if r.status_code != 200:
+        error(r.text)
+    r.raise_for_status()
+    ok(get_config_data()["url"].replace("rest/api/v1", "") + "#/check-definitions/view/" + str(r.json()["id"]))
 
 
 @check_definitions.command('init')

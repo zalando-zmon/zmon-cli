@@ -556,7 +556,7 @@ def status(config):
     except Exception:
         error("could not write to Redis!")
 
-    print ("")
+    print("")
 
     workers = list(map(lambda x: x.decode(), sorted(workers)))
 

@@ -155,8 +155,8 @@ def get_config_data():
                 del data['password']
                 with open(fn, mode='w') as fd:
                     yaml.dump(data, fd, default_flow_style=False,
-                                        allow_unicode=True,
-                                        encoding='utf-8')
+                              allow_unicode=True,
+                              encoding='utf-8')
         else:
             clickclick.warning("No configuration file found at [%s]".format(DEFAULT_CONFIG_FILE))
             data['url'] = click.prompt("ZMon Base URL (e.g. https://zmon2.local/rest/api/v1)")
@@ -164,8 +164,8 @@ def get_config_data():
 
             with open(fn, mode='w') as fd:
                 yaml.dump(data, fd, default_flow_style=False,
-                                    allow_unicode=True,
-                                    encoding='utf-8')
+                          allow_unicode=True,
+                          encoding='utf-8')
     except Exception as e:
         error(e)
 

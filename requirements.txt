@@ -2,3 +2,4 @@ requests>=2.2.1
 PyYAML>=3.11
 redis
 clickclick>=0.9
+keyring

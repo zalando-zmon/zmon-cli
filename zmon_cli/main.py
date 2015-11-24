@@ -208,6 +208,18 @@ def put(url, body):
     return response
 
 
+def post(url, body):
+    data = get_config_data()
+    response = requests.post(data['url'] + url, data=body, auth=HTTPBasicAuth(data['user'], data['password']),
+                            headers={'content-type': 'application/json'})
+    if response.status_code == 401:
+        clickclick.error("Authorization failed")
+        data['password'] = query_password(data['user'])
+        return get(url)
+    response.raise_for_status()
+    return response
+
+
 def delete(url):
     data = get_config_data()
     response = requests.delete(data['url'] + url, auth=HTTPBasicAuth(data['user'], data['password']))
@@ -281,24 +293,24 @@ def getAlertDefinition(alert_id):
 def updateAlertDef(yaml_file):
     """update a single check definition"""
     data = get_config_data()
-    post = yaml.safe_load(yaml_file)
-    post['last_modified_by'] = data['user']
-    if 'status' not in post:
-        post['status'] = 'ACTIVE'
+    alert = yaml.safe_load(yaml_file)
+    alert['last_modified_by'] = data['user']
+    if 'status' not in alert:
+        alert['status'] = 'ACTIVE'
 
     action('Updating alert definition..')
 
-    if 'id' not in post:
+    if 'id' not in alert:
         error('"id" missing in definition')
         return
 
-    if 'check_definition_id' not in post:
+    if 'check_definition_id' not in alert:
         error('"check_definition_id" missing in definition')
         return
 
-    alert_id = post['id']
+    alert_id = alert['id']
 
-    r = put('/alert-definitions/{}'.format(alert_id), json.dumps(post))
+    r = put('/alert-definitions/{}'.format(alert_id), json.dumps(alert))
     if r.status_code != 200:
         error(r.text)
     r.raise_for_status()
@@ -317,12 +329,15 @@ def check_definitions(ctx):
 def update(yaml_file):
     """update a single check definition"""
     data = get_config_data()
-    post = yaml.safe_load(yaml_file)
-    post['last_modified_by'] = data['user']
-    if 'status' not in post:
-        post['status'] = 'ACTIVE'
+
+    check = yaml.safe_load(yaml_file)
+    check['last_modified_by'] = data['user']
+    if 'status' not in check:
+        check['status'] = 'ACTIVE'
+
     action('Updating check definition... ')
-    r = post('/check-definitions', json.dumps(post))
+
+    r = post('/check-definitions', json.dumps(check))
     if r.status_code != 200:
         error(r.text)
     r.raise_for_status()

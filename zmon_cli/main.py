@@ -183,7 +183,7 @@ def members(ctx):
     pass
 
 
-@cli.group('alert-definitions')
+@cli.group('alert-definitions', cls=AliasedGroup)
 @click.pass_context
 def alert_definitions(ctx):
     """Manage alert definitions"""
@@ -263,7 +263,7 @@ def updateAlertDef(yaml_file):
     ok(get_config_data()["url"].replace("rest/api/v1", "") + "#/alert-details/" + str(r.json()["id"]))
 
 
-@cli.group('check-definitions')
+@cli.group('check-definitions', cls=AliasedGroup)
 @click.pass_context
 def check_definitions(ctx):
     """manage check definitions"""
@@ -354,7 +354,7 @@ def render_entities(output, key=None, value=''):
         print_table('id type data'.split(), rows)
 
 
-@cli.group("entities", invoke_without_command=True)
+@cli.group("entities", cls=AliasedGroup, invoke_without_command=True)
 @click.pass_context
 @output_option
 def entities(ctx, output):

@@ -211,7 +211,7 @@ def put(url, body):
 def post(url, body):
     data = get_config_data()
     response = requests.post(data['url'] + url, data=body, auth=HTTPBasicAuth(data['user'], data['password']),
-                            headers={'content-type': 'application/json'})
+                             headers={'content-type': 'application/json'})
     if response.status_code == 401:
         clickclick.error("Authorization failed")
         data['password'] = query_password(data['user'])

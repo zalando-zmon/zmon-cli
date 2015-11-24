@@ -8,6 +8,7 @@ from clickclick import action, ok, error, AliasedGroup, print_table, OutputForma
 from zmon_cli.console import highlight
 
 import click
+import clickclick
 import logging
 import os
 import requests
@@ -154,7 +155,7 @@ def get_config_data():
                 with open(fn, mode='w') as fd:
                     yaml.safe_dump(data, fd)
         else:
-            click.secho("No configuration file found at [%s]".format(DEFAULT_CONFIG_FILE), fg="yellow")
+            clickclick.warning("No configuration file found at [%s]".format(DEFAULT_CONFIG_FILE))
             data['url'] = click.prompt("ZMon Base URL (e.g. https://zmon2.local/rest/api/v1)")
             data['user'] = click.prompt("ZMon username", default=os.environ['USER'])
 
@@ -183,7 +184,7 @@ def get(url):
     data = get_config_data()
     response = requests.get(data['url'] + url, auth=HTTPBasicAuth(data['user'], data['password']))
     if response.status_code == 401:
-        click.secho("Authorization failed", fg='red')
+        clickclick.error("Authorization failed")
         data['password'] = query_password(data['user'])
         return get(url)
     response.raise_for_status()
@@ -195,7 +196,7 @@ def put(url, body):
     response = requests.put(data['url'] + url, data=body, auth=HTTPBasicAuth(data['user'], data['password']),
                             headers={'content-type': 'application/json'})
     if response.status_code == 401:
-        click.secho("Authorization failed", fg='red')
+        clickclick.error("Authorization failed")
         data['password'] = query_password(data['user'])
         return get(url)
     response.raise_for_status()
@@ -206,7 +207,7 @@ def delete(url):
     data = get_config_data()
     response = requests.delete(data['url'] + url, auth=HTTPBasicAuth(data['user'], data['password']))
     if response.status_code == 401:
-        click.secho("Authorization failed", fg='red')
+        clickclick.error("Authorization failed")
         data['password'] = query_password(data['user'])
         return delete(url)
     response.raise_for_status()
@@ -657,4 +658,4 @@ def main():
     try:
         cli()
     except requests.HTTPError as e:
-        click.secho('ERROR: {}'.format(e), bold=True, fg='red')
+        clickclick.error('ERROR: {}'.format(e))

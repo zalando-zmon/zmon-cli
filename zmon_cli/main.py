@@ -158,7 +158,7 @@ def get_config_data():
                               allow_unicode=True,
                               encoding='utf-8')
         else:
-            clickclick.warning("No configuration file found at [%s]".format(DEFAULT_CONFIG_FILE))
+            clickclick.warning("No configuration file found at [{}]".format(DEFAULT_CONFIG_FILE))
             data['url'] = click.prompt("ZMon Base URL (e.g. https://zmon2.local/rest/api/v1)")
             data['user'] = click.prompt("ZMon username", default=os.environ['USER'])
 

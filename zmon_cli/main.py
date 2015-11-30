@@ -21,10 +21,12 @@ import keyring
 from redis import StrictRedis
 
 # fields to dump as literal blocks
-LITERAL_FIELDS = set(['command', 'description'])
+LITERAL_FIELDS = set(['command', 'condition', 'description'])
 
 # custom sorting of YAML fields (i.e. we are not using the default lexical YAML ordering)
-FIELD_ORDER = ['name', 'owning_team', 'description', 'command', 'interval', 'entities', 'status', 'last_modified_by']
+FIELD_ORDER = ['id', 'check_definition_id', 'type', 'name', 'team', 'owning_team', 'responsible_team', 'description',
+               'condition',
+               'command', 'interval', 'entities', 'entities_exclude', 'status', 'last_modified_by']
 FIELD_SORT_INDEX = {k: chr(i) for i, k in enumerate(FIELD_ORDER)}
 
 DEFAULT_CONFIG_FILE = '~/.zmon-cli.yaml'
@@ -313,7 +315,7 @@ def getAlertDefinition(alert_id):
         if data[k] is None:
             del data[k]
 
-    print(yaml.safe_dump(data, default_flow_style=False, allow_unicode=True, encoding='utf-8').decode('utf-8'))
+    print(dump_yaml(data))
 
 
 @alert_definitions.command("update")
@@ -510,9 +512,7 @@ def get_entity(ctx, entity_id):
     try:
         r = get('/entities/{}/'.format(urllib.parse.quote_plus(entity_id)))
         if r.status_code == 200 and r.text != "":
-            print(yaml.safe_dump(r.json(), default_flow_style=False,
-                                 allow_unicode=True,
-                                 encoding='utf-8').decode('utf-8'))
+            print(dump_yaml(r.json()))
         else:
             action("getting entity " + entity_id + "...")
             error("not found")

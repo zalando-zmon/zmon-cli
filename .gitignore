@@ -10,3 +10,4 @@ junit.xml
 *.egg*
 .cache/
 htmlcov/
+*.swp

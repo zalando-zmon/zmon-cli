@@ -20,12 +20,40 @@ import keyring
 
 from redis import StrictRedis
 
+# fields to dump as literal blocks
+LITERAL_FIELDS = set(['command', 'description'])
+
+# custom sorting of YAML fields (i.e. we are not using the default lexical YAML ordering)
+FIELD_ORDER = ['name', 'owning_team', 'description', 'command', 'interval', 'entities', 'status', 'last_modified_by']
+FIELD_SORT_INDEX = {k: chr(i) for i, k in enumerate(FIELD_ORDER)}
+
 DEFAULT_CONFIG_FILE = '~/.zmon-cli.yaml'
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 output_option = click.option('-o', '--output', type=click.Choice(['text', 'json', 'tsv']), default='text',
                              help='Use alternative output format')
+
+
+class literal_unicode(str):
+    '''Empty class to serialize value as literal YAML block'''
+    pass
+
+
+def literal_unicode_representer(dumper, data):
+    node = dumper.represent_scalar('tag:yaml.org,2002:str', data, style='|')
+    return node
+
+
+yaml.add_representer(literal_unicode, literal_unicode_representer)
+
+
+class CustomDumper(yaml.Dumper):
+    '''Custom dumper to sort mapping fields as we like'''
+    def represent_mapping(self, tag, mapping, flow_style=None):
+        node = yaml.Dumper.represent_mapping(self, tag, mapping, flow_style)
+        node.value = sorted(node.value, key=lambda x: FIELD_SORT_INDEX.get(x[0].value, x[0].value))
+        return node
 
 
 def print_version(ctx, param, value):
@@ -344,25 +372,38 @@ def update(yaml_file):
     ok(get_config_data()["url"].replace("rest/api/v1", "") + "#/check-definitions/view/" + str(r.json()["id"]))
 
 
+def remove_trailing_whitespace(text: str):
+    '''Remove all trailing whitespace from all lines'''
+    return '\n'.join([line.rstrip() for line in text.strip().split('\n')])
+
+
+def dump_yaml(data):
+    for key, val in data.items():
+        if key in LITERAL_FIELDS:
+            # trailing whitespace would force YAML emitter to use doublequoted string
+            data[key] = literal_unicode(remove_trailing_whitespace(val))
+    return yaml.dump(data, default_flow_style=False, allow_unicode=True, Dumper=CustomDumper)
+
+
 @check_definitions.command('init')
 @click.argument('yaml_file', type=click.File('wb'))
 def init_check_definition(yaml_file):
     '''Initialize a new check definition YAML file'''
-    template = textwrap.dedent('''
-    status: ACTIVE
-    name: "{name}"
-    description: "Example ZMON check definition which returns a HTTP status code"
-    owning_team: "{owning_team}"
-    interval: 60 # seconds
-    command: |
-      http('http://example.org/', timeout=5).code()
-    entities:
-      - type: GLOBAL
-    ''')
+    # NOTE: sorted like FIELD_SORT_INDEX
     name = click.prompt('Check definition name', default='Example Check')
     owning_team = click.prompt('Team owning this check definition (i.e. your team)', default='Example Team')
-    data = template.format(name=name, owning_team=owning_team)
-    yaml_file.write(data.encode('utf-8'))
+    data = {
+        'name': name,
+        'owning_team': owning_team,
+        'description': "Example ZMON check definition which returns a HTTP status code.\n" +
+                       "You can write multiple lines here, including unicode ☺",
+        'command': "# GET request on example.org and return HTTP status code\n" +
+                   "http('http://example.org/', timeout=5).code()",
+        'interval': 60,
+        'entities': [{'type': 'GLOBAL'}],
+        'status': 'ACTIVE'
+    }
+    yaml_file.write(dump_yaml(data).encode('utf-8'))
 
 
 @check_definitions.command("get")
@@ -383,8 +424,7 @@ def getCheckDefinition(check_id):
     for k in keys:
         if data[k] is None:
             del data[k]
-
-    print(yaml.safe_dump(data, default_flow_style=False, allow_unicode=True, encoding='utf-8').decode('utf-8'))
+    print(dump_yaml(data))
 
 
 def render_entities(output, key=None, value=''):

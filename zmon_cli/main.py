@@ -203,21 +203,36 @@ def get_config_data():
 
 
 def validate_config(data):
-    if "user" not in data:
-        raise Exception("Config file not properly configured: key 'user' is missing")
     if "url" not in data:
         raise Exception("Config file not properly configured: key 'url' is missing")
+    if "token" not in data:
+        if "user" not in data:
+            raise Exception("Config file not properly configured: key 'user' is missing")
 
-    data['password'] = keyring.get_password('zmon-cli', data['user'])
-    if data['password'] is None:
-        data['password'] = query_password(data['user'])
+        data['password'] = keyring.get_password('zmon-cli', data['user'])
+        if data['password'] is None:
+            data['password'] = query_password(data['user'])
 
     return data
 
 
+def request(method, path, **kwargs):
+    data = get_config_data()
+    if 'token' in data:
+        headers = kwargs.get('headers', {})
+        headers['Authorization'] = 'Bearer {}'.format(data['token'])
+        kwargs['headers'] = headers
+    else:
+        kwargs['auth'] = HTTPBasicAuth(data['user'], data['password'])
+    if 'verify' in data:
+        requests.packages.urllib3.disable_warnings()
+        kwargs['verify'] = data['verify']
+    return method(data['url'] + path, **kwargs)
+
+
 def get(url):
     data = get_config_data()
-    response = requests.get(data['url'] + url, auth=HTTPBasicAuth(data['user'], data['password']))
+    response = request(requests.get, url)
     if response.status_code == 401:
         clickclick.error("Authorization failed")
         data['password'] = query_password(data['user'])
@@ -228,8 +243,8 @@ def get(url):
 
 def put(url, body):
     data = get_config_data()
-    response = requests.put(data['url'] + url, data=body, auth=HTTPBasicAuth(data['user'], data['password']),
-                            headers={'content-type': 'application/json'})
+    response = request(requests.put, url, data=body,
+                       headers={'content-type': 'application/json'})
     if response.status_code == 401:
         clickclick.error("Authorization failed")
         data['password'] = query_password(data['user'])
@@ -240,8 +255,8 @@ def put(url, body):
 
 def post(url, body):
     data = get_config_data()
-    response = requests.post(data['url'] + url, data=body, auth=HTTPBasicAuth(data['user'], data['password']),
-                             headers={'content-type': 'application/json'})
+    response = request(requests.post, url, data=body,
+                       headers={'content-type': 'application/json'})
     if response.status_code == 401:
         clickclick.error("Authorization failed")
         data['password'] = query_password(data['user'])
@@ -252,7 +267,7 @@ def post(url, body):
 
 def delete(url):
     data = get_config_data()
-    response = requests.delete(data['url'] + url, auth=HTTPBasicAuth(data['user'], data['password']))
+    response = request(requests.delete, url)
     if response.status_code == 401:
         clickclick.error("Authorization failed")
         data['password'] = query_password(data['user'])

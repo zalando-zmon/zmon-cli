@@ -15,6 +15,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 import yaml
 import time
+import urllib.parse
 
 import keyring
 
@@ -71,6 +72,15 @@ def configure_logging(loglevel):
                         format='%(asctime)s %(levelname)s %(name)s: %(message)s')
     logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
     logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.WARNING)
+
+
+def get_base_url(url):
+    '''
+    >>> get_base_url('https://localhost:8443/example/api/v123')
+    'https://localhost:8443/'
+    '''
+    split = urllib.parse.urlsplit(url)
+    return urllib.parse.urlunsplit(list(split[:2]) + ['/', '', ''])
 
 
 @click.group(cls=AliasedGroup, context_settings=CONTEXT_SETTINGS)
@@ -359,7 +369,7 @@ def updateAlertDef(yaml_file):
     if r.status_code != 200:
         error(r.text)
     r.raise_for_status()
-    ok(get_config_data()["url"].replace("rest/api/v1", "") + "#/alert-details/" + str(r.json()["id"]))
+    ok(get_base_url(get_config_data()["url"]) + "#/alert-details/" + str(r.json()["id"]))
 
 
 @cli.group('check-definitions', cls=AliasedGroup)
@@ -386,7 +396,7 @@ def update(yaml_file):
     if r.status_code != 200:
         error(r.text)
     r.raise_for_status()
-    ok(get_config_data()["url"].replace("rest/api/v1", "") + "#/check-definitions/view/" + str(r.json()["id"]))
+    ok(get_base_url(get_config_data()["url"]) + "#/check-definitions/view/" + str(r.json()["id"]))
 
 
 def remove_trailing_whitespace(text: str):

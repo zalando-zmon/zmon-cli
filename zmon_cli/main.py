@@ -339,7 +339,7 @@ def updateAlertDef(yaml_file):
     """update a single check definition"""
     data = get_config_data()
     alert = yaml.safe_load(yaml_file)
-    alert['last_modified_by'] = data['user']
+    alert['last_modified_by'] = data.get('user', 'unknown')
     if 'status' not in alert:
         alert['status'] = 'ACTIVE'
 
@@ -376,7 +376,7 @@ def update(yaml_file):
     data = get_config_data()
 
     check = yaml.safe_load(yaml_file)
-    check['last_modified_by'] = data['user']
+    check['last_modified_by'] = data.get('user', 'unknown')
     if 'status' not in check:
         check['status'] = 'ACTIVE'
 

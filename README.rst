@@ -36,7 +36,7 @@ Installation
 Documentation
 =============
 
-  http://zmon.readthedocs.org/en/latest/zmon-cli.html
+  http://zmon.readthedocs.org/en/latest/developer/zmon-cli.html
 
 Example
 =======

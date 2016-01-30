@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 import json
 import textwrap
 import zmon_cli
@@ -343,10 +342,33 @@ def getAlertDefinition(alert_id):
     print(dump_yaml(data))
 
 
+@alert_definitions.command("create")
+@click.argument('yaml_file', type=click.File('rb'))
+def create_alert_definition(yaml_file):
+    """Create a single alert definition"""
+    data = get_config_data()
+    alert = yaml.safe_load(yaml_file)
+    alert['last_modified_by'] = data.get('user', 'unknown')
+    if 'status' not in alert:
+        alert['status'] = 'ACTIVE'
+
+    action('Creating alert definition..')
+
+    if 'check_definition_id' not in alert:
+        error('"check_definition_id" missing in definition')
+        return
+
+    r = post('/alert-definitions', json.dumps(alert))
+    if r.status_code != 200:
+        error(r.text)
+    r.raise_for_status()
+    ok(get_base_url(get_config_data()["url"]) + "#/alert-details/" + str(r.json()["id"]))
+
+
 @alert_definitions.command("update")
 @click.argument('yaml_file', type=click.File('rb'))
-def updateAlertDef(yaml_file):
-    """update a single check definition"""
+def update_alert_definition(yaml_file):
+    """Update a single alert definition"""
     data = get_config_data()
     alert = yaml.safe_load(yaml_file)
     alert['last_modified_by'] = data.get('user', 'unknown')
@@ -489,11 +511,8 @@ def entities(ctx, output):
 @click.argument("entity")
 @click.pass_context
 def push_entity(ctx, entity):
-    if entity[-4:] == "json" and os.path.exists(entity):
-        with open(entity, 'rb') as file:
-            entity = file.read()
-            data = json.loads(entity.decode())
-    elif entity[-4:] == 'yaml' and os.path.exists(entity):
+    if (entity.endswith('.json') or entity.endswith('.yaml')) and os.path.exists(entity):
+        # JSON is a subset of YAML, so we can use the YAML parser..
         with open(entity, 'rb') as fd:
             data = yaml.safe_load(fd)
     else:

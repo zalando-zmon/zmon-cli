@@ -3,8 +3,7 @@ import textwrap
 import zmon_cli
 import urllib
 
-from clickclick import action, ok, error, AliasedGroup, print_table, OutputFormat
-from zmon_cli.console import highlight
+from clickclick import action, ok, error, info, AliasedGroup, print_table, OutputFormat
 
 import click
 import clickclick
@@ -13,12 +12,9 @@ import os
 import requests
 from requests.auth import HTTPBasicAuth
 import yaml
-import time
 import urllib.parse
 
 import keyring
-
-from redis import StrictRedis
 
 # fields to dump as literal blocks
 LITERAL_FIELDS = set(['command', 'condition', 'description'])
@@ -83,13 +79,13 @@ def get_base_url(url):
 
 
 @click.group(cls=AliasedGroup, context_settings=CONTEXT_SETTINGS)
-@click.option('--config-file', help='Use alternative config file', default=DEFAULT_CONFIG_FILE, metavar='PATH')
+@click.option('-c', '--config-file', help='Use alternative config file', default=DEFAULT_CONFIG_FILE, metavar='PATH')
 @click.option('-v', '--verbose', help='Verbose logging', is_flag=True)
 @click.option('-V', '--version', is_flag=True, callback=print_version, expose_value=False, is_eager=True)
 @click.pass_context
 def cli(ctx, config_file, verbose):
     """
-    zmon command line interface
+    ZMON command line interface
     """
     configure_logging(logging.DEBUG if verbose else logging.INFO)
     fn = os.path.expanduser(config_file)
@@ -98,81 +94,6 @@ def cli(ctx, config_file, verbose):
         with open(fn) as fd:
             data = yaml.safe_load(fd)
     ctx.obj = data
-
-
-def check_redis_host(host, port=6379):
-    action("Check Redis on {}".format(host))
-    action("...")
-    try:
-        r = StrictRedis(host, port)
-        workers = r.smembers("zmon:metrics")
-        ok()
-        return r, workers
-    except Exception as e:
-        error(e)
-
-
-def check_queues(redis):
-    queues = ['zmon:queue:default', 'zmon:queue:snmp', 'zmon:queue:internal', 'zmon:queue:secure']
-
-    for q in queues:
-        action('Checking queue length ... {} ...'.format(q))
-        l = redis.llen(q)
-        action("...")
-        highlight("{}".format(l))
-        action(" ...")
-        if l < 2000:
-            ok()
-            continue
-        error("to many tasks")
-
-
-def check_schedulers(r, schedulers):
-    for s in schedulers:
-        action('Check scheduler {} .....'.format(s[2:]))
-        try:
-            ts = r.get("zmon:metrics:{}:ts".format(s))
-            if ts is None:
-                error("No scheduling loop registered ( running/stuck? )")
-                continue
-
-            delta = int(time.time() - float(ts))
-            action("... last loop")
-            highlight("{}".format(delta))
-            action("s ago ...")
-            if delta > 300:
-                error("Last loop more than 300s ago (stuck? restart?)".format(delta))
-                continue
-
-            if delta > 180:
-                error("Last loop more than 180s ago (stuck? check logs/watch)".format(delta))
-                continue
-
-            action("...")
-            ok()
-        except Exception as e:
-            error(e)
-
-
-def check_workers(r, workers):
-    for w in workers:
-        action('Check worker {} ...'.format(w))
-        try:
-            ts = r.get("zmon:metrics:{}:ts".format(w))
-            delta = time.time() - float(ts)
-            delta = max(int(delta), 0)
-
-            action("... last exec")
-            highlight("{}".format(delta))
-            action("s ago ...")
-            if delta < 30:
-                ok()
-                continue
-
-            error("no task execute recently")
-
-        except Exception as e:
-            error(e)
 
 
 def query_password(user):
@@ -198,8 +119,8 @@ def get_config_data():
                               encoding='utf-8')
         else:
             clickclick.warning("No configuration file found at [{}]".format(DEFAULT_CONFIG_FILE))
-            data['url'] = click.prompt("ZMon Base URL (e.g. https://zmon2.local/rest/api/v1)")
-            data['user'] = click.prompt("ZMon username", default=os.environ['USER'])
+            data['url'] = click.prompt("ZMON Base URL (e.g. https://zmon.example.org/api/v1)")
+            data['user'] = click.prompt("ZMON username", default=os.environ['USER'])
 
             with open(fn, mode='w') as fd:
                 yaml.dump(data, fd, default_flow_style=False,
@@ -397,7 +318,7 @@ def update_alert_definition(yaml_file):
 @cli.group('check-definitions', cls=AliasedGroup)
 @click.pass_context
 def check_definitions(ctx):
-    """manage check definitions"""
+    """Manage check definitions"""
     pass
 
 
@@ -503,6 +424,7 @@ def render_entities(output, key=None, value=''):
 @click.pass_context
 @output_option
 def entities(ctx, output):
+    '''Manage entities'''
     if not ctx.invoked_subcommand:
         render_entities(output)
 
@@ -577,7 +499,7 @@ def filter_entities(ctx, key, value, output):
 @cli.group(invoke_without_command=True)
 @click.pass_context
 def groups(ctx):
-    """manage contact groups"""
+    """Manage contact groups"""
     if not ctx.invoked_subcommand:
         r = get("/groups/")
         for t in r.json():
@@ -671,91 +593,21 @@ def set_name(ctx, member_email, member_name):
 @cli.command()
 @click.pass_obj
 def status(config):
-    """check system status"""
-    if 'redis_host_master' not in config or 'redis_host_slave' not in config:
-        error("Please set redis_host_master and redis_host_slave in zmon cli config file!")
-        exit(-1)
-
-    redis_master, workers = check_redis_host(config['redis_host_master'], 6379)
-
-    redis_slave, workers = check_redis_host(config['redis_host_slave'], 6379)
-
-    print("")
-
-    try:
-        action("Verifying write to master...")
-        ts = str(time.time())
-
-        redis_master.set("status-test", ts)
-        ts2 = redis_master.get("status-test").decode()
-
-        if ts == ts2:
-            ok()
-        else:
-            error("read != write (check Redis logs)")
-    except Exception:
-        error("could not write to Redis!")
-
-    print("")
-
-    workers = list(map(lambda x: x.decode(), sorted(workers)))
-
-    action("Looking for <30s interval scheduler ...")
-    scheduler = list(filter(lambda x: x[:7] == 's-p3423', workers))
-    if not scheduler:
-        error("not found! check p3423")
-    else:
-        action("... running {}".format(scheduler[0][2:]))
-        ok()
-
-    action("Looking for >30s interval scheduler ...")
-    scheduler = list(filter(lambda x: x[:7] == 's-p3422', workers))
-    if not scheduler:
-        error("not found! check p3422")
-    else:
-        action("... running {}".format(scheduler[0][2:]))
-        ok()
-
-    action("Looking for NG scheduler ...")
-    scheduler = list(filter(lambda x: x == 's-p3421.monitor02', workers))
-    if not scheduler:
-        error("not found! check p3421 on monitor02")
-    else:
-        action("... running {}".format(scheduler[0][2:]))
-        ok()
-
-    action("Looking for self monitoring scheduler ...")
-    scheduler = list(filter(lambda x: x == 's-p3421.itr-monitor01', workers))
-    if not scheduler:
-        error("not found! check p3411 on itr-monitor02")
-    else:
-        action("... running {}".format(scheduler[0][2:]))
-        ok()
-
-    print("")
-
-    ws = []
-    ss = []
-
-    for w in workers:
-        if w[:2] == "s-":
-            ss.append(w)
-        else:
-            ws.append(w)
-
-    check_schedulers(redis_slave, ss)
-    print("")
-
-    check_queues(redis_slave)
-    print("")
-
-    check_workers(redis_slave, ws)
-
-
-@cli.command()
-@click.pass_context
-def help(ctx):
-    pass
+    """Check system status"""
+    response = get('/status')
+    data = response.json()
+    info('Workers:')
+    rows = []
+    for worker in data.get('workers', []):
+        rows.append(worker)
+    rows.sort(key=lambda x: x.get('name'))
+    print_table(['name', 'check_invocations', 'last_execution_time'], rows)
+    info('Queues:')
+    rows = []
+    for queue in data.get('queues', []):
+        rows.append(queue)
+    rows.sort(key=lambda x: x.get('name'))
+    print_table(['name', 'size'], rows)
 
 
 def main():

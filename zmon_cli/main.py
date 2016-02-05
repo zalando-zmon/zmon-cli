@@ -135,7 +135,11 @@ def get_config_data():
 
 
 def validate_config(data):
-    if "url" not in data:
+    '''
+    >>> validate_config({'url': 'foo', 'token': '123'})['url']
+    'foo'
+    '''
+    if not data.get('url'):
         raise Exception("Config file not properly configured: key 'url' is missing")
     if "user" in data:
         data['password'] = keyring.get_password('zmon-cli', data['user'])

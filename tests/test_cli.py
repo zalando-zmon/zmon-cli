@@ -35,3 +35,15 @@ def test_status_zign(monkeypatch):
         assert '12377' in result.output
         assert 'd ago' in result.output
     get_token.assert_called_with('zmon', ['uid'])
+
+
+def test_get_alert_definition(monkeypatch):
+    get = MagicMock()
+    get.return_value.json.return_value = {'id': 123, 'check_definition_id': 9, 'name': 'Test', 'condition': '>0', 'foo': None}
+    monkeypatch.setattr('zmon_cli.main.get', get)
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        with open('config.yaml', 'w') as fd:
+            yaml.dump({}, fd)
+        result = runner.invoke(cli, ['-c', 'config.yaml', 'alert', 'get', '123'], catch_exceptions=False)
+        assert 'id: 123\ncheck_definition_id: 9\nname: Test\ncondition: |-\n  >0' == result.output.rstrip()

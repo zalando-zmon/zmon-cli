@@ -11,9 +11,7 @@ def test_status(monkeypatch):
     monkeypatch.setattr('zmon_cli.main.get', get)
     runner = CliRunner()
     with runner.isolated_filesystem():
-        with open('config.yaml', 'w') as fd:
-            yaml.dump({}, fd)
-        result = runner.invoke(cli, ['-c', 'config.yaml', 'status'], catch_exceptions=False)
+        result = runner.invoke(cli, ['status'], catch_exceptions=False)
         assert 'foo' in result.output
         assert '12377' in result.output
         assert 'd ago' in result.output
@@ -26,11 +24,12 @@ def test_status_zign(monkeypatch):
     get_token.return_value = '1298'
     monkeypatch.setattr('requests.get', get)
     monkeypatch.setattr('zign.api.get_token', get_token)
+    monkeypatch.setattr('zmon_cli.main.DEFAULT_CONFIG_FILE', 'test.yaml')
     runner = CliRunner()
     with runner.isolated_filesystem():
-        with open('config.yaml', 'w') as fd:
-            yaml.dump({'url': 'https://example.org/api/v1'}, fd)
-        result = runner.invoke(cli, ['-c', 'config.yaml', 'status'], catch_exceptions=False)
+        with open('test.yaml', 'w') as fd:
+            yaml.dump({'url': 'foo'}, fd)
+        result = runner.invoke(cli, ['status'], catch_exceptions=False)
         assert 'foo' in result.output
         assert '12377' in result.output
         assert 'd ago' in result.output
@@ -43,7 +42,5 @@ def test_get_alert_definition(monkeypatch):
     monkeypatch.setattr('zmon_cli.main.get', get)
     runner = CliRunner()
     with runner.isolated_filesystem():
-        with open('config.yaml', 'w') as fd:
-            yaml.dump({}, fd)
-        result = runner.invoke(cli, ['-c', 'config.yaml', 'alert', 'get', '123'], catch_exceptions=False)
+        result = runner.invoke(cli, ['alert', 'get', '123'], catch_exceptions=False)
         assert 'id: 123\ncheck_definition_id: 9\nname: Test\ncondition: |-\n  >0' == result.output.rstrip()

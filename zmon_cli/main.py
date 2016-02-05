@@ -13,6 +13,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 import yaml
 import urllib.parse
+import zign.api
 
 import keyring
 
@@ -120,6 +121,7 @@ def get_config_data():
         else:
             clickclick.warning("No configuration file found at [{}]".format(DEFAULT_CONFIG_FILE))
             data['url'] = click.prompt("ZMON Base URL (e.g. https://zmon.example.org/api/v1)")
+            # TODO: either ask for fixed token or Zign
             data['user'] = click.prompt("ZMON username", default=os.environ['USER'])
 
             with open(fn, mode='w') as fd:
@@ -133,15 +135,18 @@ def get_config_data():
 
 
 def validate_config(data):
-    if "url" not in data:
+    '''
+    >>> validate_config({'url': 'foo', 'token': '123'})['url']
+    'foo'
+    '''
+    if not data.get('url'):
         raise Exception("Config file not properly configured: key 'url' is missing")
-    if "token" not in data:
-        if "user" not in data:
-            raise Exception("Config file not properly configured: key 'user' is missing")
-
+    if 'user' in data:
         data['password'] = keyring.get_password('zmon-cli', data['user'])
         if data['password'] is None:
             data['password'] = query_password(data['user'])
+    elif 'token' not in data:
+        data['token'] = zign.api.get_token('zmon', ['uid'])
 
     return data
 
@@ -157,52 +162,35 @@ def request(method, path, **kwargs):
     if 'verify' in data:
         requests.packages.urllib3.disable_warnings()
         kwargs['verify'] = data['verify']
-    return method(data['url'] + path, **kwargs)
+    response = method(data['url'] + path, **kwargs)
+    if response.status_code == 401:
+        # retry with new password
+        clickclick.error("Authorization failed")
+        data['password'] = query_password(data['user'])
+        response = request(method, path, **kwargs)
+    response.raise_for_status()
+    return response
 
 
 def get(url):
-    data = get_config_data()
     response = request(requests.get, url)
-    if response.status_code == 401:
-        clickclick.error("Authorization failed")
-        data['password'] = query_password(data['user'])
-        return get(url)
-    response.raise_for_status()
     return response
 
 
 def put(url, body):
-    data = get_config_data()
     response = request(requests.put, url, data=body,
                        headers={'content-type': 'application/json'})
-    if response.status_code == 401:
-        clickclick.error("Authorization failed")
-        data['password'] = query_password(data['user'])
-        return get(url)
-    response.raise_for_status()
     return response
 
 
 def post(url, body):
-    data = get_config_data()
     response = request(requests.post, url, data=body,
                        headers={'content-type': 'application/json'})
-    if response.status_code == 401:
-        clickclick.error("Authorization failed")
-        data['password'] = query_password(data['user'])
-        return get(url)
-    response.raise_for_status()
     return response
 
 
 def delete(url):
-    data = get_config_data()
     response = request(requests.delete, url)
-    if response.status_code == 401:
-        clickclick.error("Authorization failed")
-        data['password'] = query_password(data['user'])
-        return delete(url)
-    response.raise_for_status()
     return response
 
 
@@ -251,7 +239,7 @@ def init(yaml_file):
 
 @alert_definitions.command('get')
 @click.argument("alert_id", type=int)
-def getAlertDefinition(alert_id):
+def get_alert_definition(alert_id):
     '''Get a single alert definition'''
 
     data = get('/alert-definitions/{}'.format(alert_id)).json()
@@ -282,7 +270,6 @@ def create_alert_definition(yaml_file):
     r = post('/alert-definitions', json.dumps(alert))
     if r.status_code != 200:
         error(r.text)
-    r.raise_for_status()
     ok(get_base_url(get_config_data()["url"]) + "#/alert-details/" + str(r.json()["id"]))
 
 
@@ -311,7 +298,6 @@ def update_alert_definition(yaml_file):
     r = put('/alert-definitions/{}'.format(alert_id), json.dumps(alert))
     if r.status_code != 200:
         error(r.text)
-    r.raise_for_status()
     ok(get_base_url(get_config_data()["url"]) + "#/alert-details/" + str(r.json()["id"]))
 
 
@@ -338,7 +324,6 @@ def update(yaml_file):
     r = post('/check-definitions', json.dumps(check))
     if r.status_code != 200:
         error(r.text)
-    r.raise_for_status()
     ok(get_base_url(get_config_data()["url"]) + "#/check-definitions/view/" + str(r.json()["id"]))
 
 
@@ -378,7 +363,7 @@ def init_check_definition(yaml_file):
 
 @check_definitions.command("get")
 @click.argument("check_id", type=int)
-def getCheckDefinition(check_id):
+def get_check_definition(check_id):
     '''get a single check definition'''
 
     r = get('/check-definitions/{}'.format(check_id))
@@ -433,6 +418,7 @@ def entities(ctx, output):
 @click.argument("entity")
 @click.pass_context
 def push_entity(ctx, entity):
+    '''Push one or more entities'''
     if (entity.endswith('.json') or entity.endswith('.yaml')) and os.path.exists(entity):
         # JSON is a subset of YAML, so we can use the YAML parser..
         with open(entity, 'rb') as fd:
@@ -460,6 +446,7 @@ def push_entity(ctx, entity):
 @click.argument("entity-id")
 @click.pass_context
 def delete_entity(ctx, entity_id):
+    '''Delete a single entity by ID'''
     action("delete entity... {}".format(entity_id))
     try:
         r = delete('/entities/?id={}'.format(urllib.parse.quote_plus(entity_id)))
@@ -475,6 +462,7 @@ def delete_entity(ctx, entity_id):
 @click.argument("entity-id")
 @click.pass_context
 def get_entity(ctx, entity_id):
+    '''Get a single entity by ID'''
     try:
         r = get('/entities/{}/'.format(urllib.parse.quote_plus(entity_id)))
         if r.status_code == 200 and r.text != "":

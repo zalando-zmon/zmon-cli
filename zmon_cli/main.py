@@ -13,6 +13,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 import yaml
 import urllib.parse
+import zign.api
 
 import keyring
 
@@ -135,13 +136,12 @@ def get_config_data():
 def validate_config(data):
     if "url" not in data:
         raise Exception("Config file not properly configured: key 'url' is missing")
-    if "token" not in data:
-        if "user" not in data:
-            raise Exception("Config file not properly configured: key 'user' is missing")
-
+    if "user" in data:
         data['password'] = keyring.get_password('zmon-cli', data['user'])
         if data['password'] is None:
             data['password'] = query_password(data['user'])
+    elif 'token' not in data:
+        data['token'] = zign.api.get_token('zmon', ['uid'])
 
     return data
 

@@ -3,3 +3,4 @@ PyYAML>=3.11
 clickclick>=0.9
 keyring
 keyrings.alt
+stups-zign

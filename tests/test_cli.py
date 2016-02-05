@@ -17,3 +17,21 @@ def test_status(monkeypatch):
         assert 'foo' in result.output
         assert '12377' in result.output
         assert 'd ago' in result.output
+
+
+def test_status_zign(monkeypatch):
+    get = MagicMock()
+    get.return_value.json.return_value = {'workers': [{'name': 'foo', 'check_invocations': 12377, 'last_execution_time': 1}]}
+    get_token = MagicMock()
+    get_token.return_value = '1298'
+    monkeypatch.setattr('requests.get', get)
+    monkeypatch.setattr('zign.api.get_token', get_token)
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        with open('config.yaml', 'w') as fd:
+            yaml.dump({'url': 'https://example.org/api/v1'}, fd)
+        result = runner.invoke(cli, ['-c', 'config.yaml', 'status'], catch_exceptions=False)
+        assert 'foo' in result.output
+        assert '12377' in result.output
+        assert 'd ago' in result.output
+    get_token.assert_called_with('zmon', ['uid'])

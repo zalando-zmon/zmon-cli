@@ -141,7 +141,7 @@ def validate_config(data):
     '''
     if not data.get('url'):
         raise Exception("Config file not properly configured: key 'url' is missing")
-    if "user" in data:
+    if 'user' in data:
         data['password'] = keyring.get_password('zmon-cli', data['user'])
         if data['password'] is None:
             data['password'] = query_password(data['user'])
@@ -270,7 +270,6 @@ def create_alert_definition(yaml_file):
     r = post('/alert-definitions', json.dumps(alert))
     if r.status_code != 200:
         error(r.text)
-    r.raise_for_status()
     ok(get_base_url(get_config_data()["url"]) + "#/alert-details/" + str(r.json()["id"]))
 
 
@@ -299,7 +298,6 @@ def update_alert_definition(yaml_file):
     r = put('/alert-definitions/{}'.format(alert_id), json.dumps(alert))
     if r.status_code != 200:
         error(r.text)
-    r.raise_for_status()
     ok(get_base_url(get_config_data()["url"]) + "#/alert-details/" + str(r.json()["id"]))
 
 
@@ -326,7 +324,6 @@ def update(yaml_file):
     r = post('/check-definitions', json.dumps(check))
     if r.status_code != 200:
         error(r.text)
-    r.raise_for_status()
     ok(get_base_url(get_config_data()["url"]) + "#/check-definitions/view/" + str(r.json()["id"]))
 
 

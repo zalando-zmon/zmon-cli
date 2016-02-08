@@ -321,6 +321,10 @@ def update(yaml_file):
 
     action('Updating check definition... ')
 
+    if (not 'owning_team' in check) or check.get('owning_team')=='':
+        error('"owning_team" not set')
+        return
+
     r = post('/check-definitions', json.dumps(check))
     if r.status_code != 200:
         error(r.text)
@@ -576,6 +580,58 @@ def set_name(ctx, member_email, member_name):
     action("Changing user name ....")
     put("/groups/{}/name/{}/".format(member_email, member_name))
     ok()
+
+
+@cli.group('dashboard', cls=AliasedGroup)
+@click.pass_context
+def dashboard(ctx):
+    """Manage ZMON dashboards"""
+    pass
+
+
+@dashboard.command('get')
+@click.argument("dashboard_id", type=int)
+@click.pass_context
+def dashboard_get(ctx, dashboard_id):
+    """Get ZMON dashboard"""
+    r = get("/dashboard/{}".format(dashboard_id))
+    if r.status_code == 200:
+        print(dump_yaml(r.json()))
+    else:
+        action("Getting dashboard...")
+        error("not found ({})".format(r.status_code))
+
+
+@dashboard.command('update')
+@click.argument('yaml_file', type=click.Path(exists=True))
+@click.pass_context
+def dashboard_update(ctx, yaml_file):
+    """POST ZMON dashboard"""
+
+    with open(yaml_file, 'rb') as f:
+        data = yaml.safe_load(f)
+
+    if 'id' in data:
+        action('updating dashboard {} ... '.format(data.get('id')))
+        r = post('/dashboard/{}'.format(data['id']), json.dumps(data))
+
+        if r.status_code == 200:
+            ok()
+        else:
+            error("update failed ({})".format(r.status_code))
+    else:
+        action('creating new dashboard ... ')
+        r = post('/dashboard/', json.dumps(data))
+
+        if r.status_code == 200:
+            data['id'] = int(r.text)
+
+            with open(yaml_file, 'wb') as f:
+                f.write(dump_yaml(data).encode('utf-8'))
+
+            ok("new id: {}".format(r.text))
+        else:
+            error("create failed ({})".format(r.status_code))
 
 
 @cli.command()

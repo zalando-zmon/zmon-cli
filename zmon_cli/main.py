@@ -321,7 +321,7 @@ def update(yaml_file):
 
     action('Updating check definition... ')
 
-    if (not 'owning_team' in check) or check.get('owning_team')=='':
+    if 'owning_team' not in check or check.get('owning_team') == '':
         error('"owning_team" not set')
         return
 

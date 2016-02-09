@@ -268,8 +268,6 @@ def create_alert_definition(yaml_file):
         return
 
     r = post('/alert-definitions', json.dumps(alert))
-    if r.status_code != 200:
-        error(r.text)
     ok(get_base_url(get_config_data()["url"]) + "#/alert-details/" + str(r.json()["id"]))
 
 
@@ -296,8 +294,6 @@ def update_alert_definition(yaml_file):
     alert_id = alert['id']
 
     r = put('/alert-definitions/{}'.format(alert_id), json.dumps(alert))
-    if r.status_code != 200:
-        error(r.text)
     ok(get_base_url(get_config_data()["url"]) + "#/alert-details/" + str(r.json()["id"]))
 
 
@@ -325,8 +321,6 @@ def update(yaml_file):
         raise click.UsageError('Missing "owning_team" in check definition')
 
     r = post('/check-definitions', json.dumps(check))
-    if r.status_code != 200:
-        error(r.text)
     ok(get_base_url(get_config_data()["url"]) + "#/check-definitions/view/" + str(r.json()["id"]))
 
 
@@ -372,7 +366,7 @@ def get_check_definition(check_id):
     r = get('/check-definitions/{}'.format(check_id))
 
     if r.status_code != 200 or r.text == "":
-        action("retrieving check " + str(check_id) + " ...")
+        action("Retrieving check " + str(check_id) + "..")
         error("not found")
         return
 
@@ -433,14 +427,11 @@ def push_entity(ctx, entity):
         data = [data]
 
     for e in data:
-        action("creating entity...{}".format(e['id']))
+        action("Creating entity {}..".format(e['id']))
         try:
             entity = json.dumps(e)
-            r = put('/entities/', entity)
-            if r.status_code == 200:
-                ok()
-            else:
-                error()
+            put('/entities/', entity)
+            ok()
         except:
             error("failed")
 
@@ -450,7 +441,7 @@ def push_entity(ctx, entity):
 @click.pass_context
 def delete_entity(ctx, entity_id):
     '''Delete a single entity by ID'''
-    action("delete entity... {}".format(entity_id))
+    action("Deleting entity {}..".format(entity_id))
     try:
         r = delete('/entities/?id={}'.format(urllib.parse.quote_plus(entity_id)))
         if r.status_code == 200 and r.text == "1":
@@ -471,7 +462,7 @@ def get_entity(ctx, entity_id):
         if r.status_code == 200 and r.text != "":
             print(dump_yaml(r.json()))
         else:
-            action("getting entity " + entity_id + "...")
+            action("Getting entity " + entity_id + "..")
             error("not found")
     except Exception as ex:
         error("Exception during get entity: " + str(ex))
@@ -510,7 +501,7 @@ def groups(ctx):
 @click.argument("user_name")
 @click.pass_context
 def switch_active(ctx, group_name, user_name):
-    action("Switching active user ....")
+    action("Switching active user..")
     r = delete("/groups/{}/active/".format(group_name))
     r = put("/groups/{}/active/{}/".format(group_name, user_name))
     if r.text == '1':
@@ -524,7 +515,7 @@ def switch_active(ctx, group_name, user_name):
 @click.argument("user_name")
 @click.pass_context
 def group_add(ctx, group_name, user_name):
-    action("Adding user ....")
+    action("Adding user..")
     r = put("/groups/{}/member/{}/".format(group_name, user_name))
     if r.text == '1':
         ok()
@@ -537,7 +528,7 @@ def group_add(ctx, group_name, user_name):
 @click.argument("user_name")
 @click.pass_context
 def group_remove(ctx, group_name, user_name):
-    action("Removing user ....")
+    action("Removing user..")
     r = delete("/groups/{}/member/{}/".format(group_name, user_name))
     if r.text == '1':
         ok()
@@ -550,7 +541,7 @@ def group_remove(ctx, group_name, user_name):
 @click.argument("phone_nr")
 @click.pass_context
 def add_phone(ctx, member_email, phone_nr):
-    action("Adding phone ....")
+    action("Adding phone..")
     r = put("/groups/{}/phone/{}/".format(member_email, phone_nr))
     if r.text == '1':
         ok()
@@ -563,7 +554,7 @@ def add_phone(ctx, member_email, phone_nr):
 @click.argument("phone_nr")
 @click.pass_context
 def remove_phone(ctx, member_email, phone_nr):
-    action("Removing phone number ....")
+    action("Removing phone number..")
     r = delete("/groups/{}/phone/{}/".format(member_email, phone_nr))
     if r.text == '1':
         ok()
@@ -576,7 +567,7 @@ def remove_phone(ctx, member_email, phone_nr):
 @click.argument("member_name")
 @click.pass_context
 def set_name(ctx, member_email, member_name):
-    action("Changing user name ....")
+    action("Changing user name..")
     put("/groups/{}/name/{}/".format(member_email, member_name))
     ok()
 
@@ -594,43 +585,31 @@ def dashboard(ctx):
 def dashboard_get(ctx, dashboard_id):
     """Get ZMON dashboard"""
     r = get("/dashboard/{}".format(dashboard_id))
-    if r.status_code == 200:
-        print(dump_yaml(r.json()))
-    else:
-        action("Getting dashboard...")
-        error("not found ({})".format(r.status_code))
+    print(dump_yaml(r.json()))
 
 
 @dashboard.command('update')
 @click.argument('yaml_file', type=click.Path(exists=True))
 @click.pass_context
 def dashboard_update(ctx, yaml_file):
-    """POST ZMON dashboard"""
+    """Create/Update a single ZMON dashboard"""
 
     with open(yaml_file, 'rb') as f:
         data = yaml.safe_load(f)
 
     if 'id' in data:
-        action('updating dashboard {} ... '.format(data.get('id')))
-        r = post('/dashboard/{}'.format(data['id']), json.dumps(data))
-
-        if r.status_code == 200:
-            ok()
-        else:
-            error("update failed ({})".format(r.status_code))
+        action('Updating dashboard {}..'.format(data.get('id')))
+        post('/dashboard/{}'.format(data['id']), json.dumps(data))
+        ok()
     else:
-        action('creating new dashboard ... ')
+        action('Creating new dashboard..')
         r = post('/dashboard/', json.dumps(data))
+        data['id'] = int(r.text)
 
-        if r.status_code == 200:
-            data['id'] = int(r.text)
+        with open(yaml_file, 'wb') as f:
+            f.write(dump_yaml(data).encode('utf-8'))
 
-            with open(yaml_file, 'wb') as f:
-                f.write(dump_yaml(data).encode('utf-8'))
-
-            ok("new id: {}".format(r.text))
-        else:
-            error("create failed ({})".format(r.status_code))
+        ok("new id: {}".format(r.text))
 
 
 @cli.command()

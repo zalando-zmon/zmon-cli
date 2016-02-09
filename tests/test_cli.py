@@ -44,3 +44,27 @@ def test_get_alert_definition(monkeypatch):
     with runner.isolated_filesystem():
         result = runner.invoke(cli, ['alert', 'get', '123'], catch_exceptions=False)
         assert 'id: 123\ncheck_definition_id: 9\nname: Test\ncondition: |-\n  >0' == result.output.rstrip()
+
+
+def test_update_check_definition_invalid():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        with open('check.yaml', 'w') as fd:
+            yaml.safe_dump({}, fd)
+        result = runner.invoke(cli, ['check', 'update', 'check.yaml'], catch_exceptions=False)
+        assert 'Missing "owning_team" in result.output'
+
+
+def test_update_check_definition(monkeypatch):
+    monkeypatch.setattr('zmon_cli.main.DEFAULT_CONFIG_FILE', 'test.yaml')
+    post = MagicMock()
+    post.return_value.json.return_value = {'id': 7}
+    monkeypatch.setattr('zmon_cli.main.post', post)
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        with open('test.yaml', 'w') as fd:
+            yaml.dump({'url': 'foo'}, fd)
+        with open('check.yaml', 'w') as fd:
+            yaml.safe_dump({'owning_team': 'myteam'}, fd)
+        result = runner.invoke(cli, ['check', 'update', 'check.yaml'], catch_exceptions=False)
+        assert '/check-definitions/view/7' in result.output

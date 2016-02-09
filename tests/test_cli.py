@@ -46,9 +46,12 @@ def test_get_alert_definition(monkeypatch):
         assert 'id: 123\ncheck_definition_id: 9\nname: Test\ncondition: |-\n  >0' == result.output.rstrip()
 
 
-def test_update_check_definition_invalid():
+def test_update_check_definition_invalid(monkeypatch):
+    monkeypatch.setattr('zmon_cli.main.DEFAULT_CONFIG_FILE', 'test.yaml')
     runner = CliRunner()
     with runner.isolated_filesystem():
+        with open('test.yaml', 'w') as fd:
+            yaml.dump({'url': 'foo', 'token': '123'}, fd)
         with open('check.yaml', 'w') as fd:
             yaml.safe_dump({}, fd)
         result = runner.invoke(cli, ['check', 'update', 'check.yaml'], catch_exceptions=False)
@@ -63,7 +66,7 @@ def test_update_check_definition(monkeypatch):
     runner = CliRunner()
     with runner.isolated_filesystem():
         with open('test.yaml', 'w') as fd:
-            yaml.dump({'url': 'foo'}, fd)
+            yaml.dump({'url': 'foo', 'token': '123'}, fd)
         with open('check.yaml', 'w') as fd:
             yaml.safe_dump({'owning_team': 'myteam'}, fd)
         result = runner.invoke(cli, ['check', 'update', 'check.yaml'], catch_exceptions=False)

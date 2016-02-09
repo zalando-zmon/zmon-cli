@@ -321,9 +321,8 @@ def update(yaml_file):
 
     action('Updating check definition... ')
 
-    if 'owning_team' not in check or check.get('owning_team') == '':
-        error('"owning_team" not set')
-        return
+    if not check.get('owning_team'):
+        raise click.UsageError('Missing "owning_team" in check definition')
 
     r = post('/check-definitions', json.dumps(check))
     if r.status_code != 200:

@@ -1,3 +1,4 @@
+import ast
 import json
 import textwrap
 import zmon_cli
@@ -304,6 +305,13 @@ def check_definitions(ctx):
     pass
 
 
+def validate_check_command(src):
+    try:
+        ast.parse(src)
+    except Exception as e:
+        raise click.UsageError('Invalid check command: {}'.format(e))
+
+
 @check_definitions.command("update")
 @click.argument('yaml_file', type=click.File('rb'))
 def update(yaml_file):
@@ -319,6 +327,8 @@ def update(yaml_file):
 
     if not check.get('owning_team'):
         raise click.UsageError('Missing "owning_team" in check definition')
+
+    validate_check_command(check['command'])
 
     r = post('/check-definitions', json.dumps(check))
     ok(get_base_url(get_config_data()["url"]) + "#/check-definitions/view/" + str(r.json()["id"]))

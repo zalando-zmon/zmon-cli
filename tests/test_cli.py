@@ -68,6 +68,6 @@ def test_update_check_definition(monkeypatch):
         with open('test.yaml', 'w') as fd:
             yaml.dump({'url': 'foo', 'token': '123'}, fd)
         with open('check.yaml', 'w') as fd:
-            yaml.safe_dump({'owning_team': 'myteam'}, fd)
+            yaml.safe_dump({'owning_team': 'myteam', 'command': 'do_stuff()'}, fd)
         result = runner.invoke(cli, ['check', 'update', 'check.yaml'], catch_exceptions=False)
         assert '/check-definitions/view/7' in result.output

@@ -581,6 +581,47 @@ def set_name(ctx, member_email, member_name):
     put("/groups/{}/name/{}/".format(member_email, member_name))
     ok()
 
+@cli.group('grafana', cls=AliasedGroup)
+@click.pass_context
+def grafana(ctx):
+    """Manage Grafana dashboards"""
+    pass
+
+
+@grafana.command('get')
+@click.argument("dashboard_id", type=click.STRING)
+@click.pass_context
+def grafana_get(ctx, dashboard_id):
+    """Get ZMON dashboard"""
+    r = get("/grafana2-dashboards/{}".format(dashboard_id))
+    print(dump_yaml(r.json()))
+
+
+@grafana.command('update')
+@click.argument('yaml_file', type=click.Path(exists=True))
+@click.pass_context
+def grafana_update(ctx, yaml_file):
+    """Create/Update a single ZMON dashboard"""
+
+    with open(yaml_file, 'rb') as f:
+        data = yaml.safe_load(f)
+
+    title = data.get('dashboard', {}).get('title', None)
+    id = data.get('dashboard', {}).get('id', None)
+
+    if id is None and title is None:
+        error("id and title missing")
+
+    if title is None:
+        error("title is missing")
+
+    action('Updating dashboard title "{}"...'.format(title))
+    r = post('/grafana2-dashboards', json.dumps(data))
+    if r.status_code == 200:
+        ok()
+    else:
+        error(r.text)
+
 
 @cli.group('dashboard', cls=AliasedGroup)
 @click.pass_context

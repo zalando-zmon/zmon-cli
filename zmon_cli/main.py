@@ -581,6 +581,7 @@ def set_name(ctx, member_email, member_name):
     put("/groups/{}/name/{}/".format(member_email, member_name))
     ok()
 
+
 @cli.group('grafana', cls=AliasedGroup)
 @click.pass_context
 def grafana(ctx):

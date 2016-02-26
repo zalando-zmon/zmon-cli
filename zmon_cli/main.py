@@ -368,6 +368,19 @@ def init_check_definition(yaml_file):
     yaml_file.write(dump_yaml(data).encode('utf-8'))
 
 
+@check_definitions.command("delete")
+@click.argument("check_id", type=int)
+def delete_check_definition(check_id):
+    '''Delete an orphan check definition'''
+
+    action('delete check id {} ...'.format(check_id))
+    r = delete('/check-definitions/{}'.format(check_id))
+    if r.status_code == 200:
+        ok()
+    else:
+        error(r.text)
+
+
 @check_definitions.command("get")
 @click.argument("check_id", type=int)
 def get_check_definition(check_id):

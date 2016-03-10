@@ -223,6 +223,8 @@ def list_tv_token():
     ts = r.json()
     for t in ts:
         t["created"] = datetime.datetime.fromtimestamp(t["created"]/1000)
+        if t["bound_at"] is not None:
+            t["bound_at"] = datetime.datetime.fromtimestamp(t["bound_at"]/1000)
 
     print(dump_yaml(ts))
 

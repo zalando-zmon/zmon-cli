@@ -206,12 +206,13 @@ def members(ctx):
 @cli.group('onetime-token', cls=AliasedGroup)
 @click.pass_context
 def tv_tokens(ctx):
-    """Manage alert definitions"""
+    """Manage onetime tokens for TVs/View only login"""
     pass
 
 
 @tv_tokens.command('get')
 def get_tv_token():
+    """retrieve a new token"""
     r = post('/onetime-tokens', {})
     action('getting one-time token: ...')
     ok(r.text)
@@ -219,6 +220,7 @@ def get_tv_token():
 
 @tv_tokens.command('list')
 def list_tv_token():
+    """list onetime tokens for your user"""
     r = get('/onetime-tokens')
     ts = r.json()
     for t in ts:

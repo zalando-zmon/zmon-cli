@@ -202,6 +202,25 @@ def members(ctx):
     pass
 
 
+@cli.group('onetime-token', cls=AliasedGroup)
+@click.pass_context
+def tv_tokens(ctx):
+    """Manage alert definitions"""
+    pass
+
+
+@tv_tokens.command('get')
+def get_tv_token():
+    r = post('/onetime-tokens', {})
+    action('getting one-time token: ...')
+    ok(r.text)
+
+
+@tv_tokens.command('list')
+def list_tv_token():
+    pass
+
+
 @cli.group('alert-definitions', cls=AliasedGroup)
 @click.pass_context
 def alert_definitions(ctx):

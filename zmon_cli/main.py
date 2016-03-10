@@ -15,6 +15,7 @@ from requests.auth import HTTPBasicAuth
 import yaml
 import urllib.parse
 import zign.api
+import datetime
 
 import keyring
 
@@ -218,7 +219,12 @@ def get_tv_token():
 
 @tv_tokens.command('list')
 def list_tv_token():
-    pass
+    r = get('/onetime-tokens')
+    ts = r.json()
+    for t in ts:
+        t["created"] = datetime.datetime.fromtimestamp(t["created"]/1000)
+
+    print(dump_yaml(ts))
 
 
 @cli.group('alert-definitions', cls=AliasedGroup)
@@ -359,10 +365,11 @@ def remove_trailing_whitespace(text: str):
 
 
 def dump_yaml(data):
-    for key, val in data.items():
-        if key in LITERAL_FIELDS:
-            # trailing whitespace would force YAML emitter to use doublequoted string
-            data[key] = literal_unicode(remove_trailing_whitespace(val))
+    if isinstance(data, dict):
+        for key, val in data.items():
+            if key in LITERAL_FIELDS:
+                # trailing whitespace would force YAML emitter to use doublequoted string
+                data[key] = literal_unicode(remove_trailing_whitespace(val))
     return yaml.dump(data, default_flow_style=False, allow_unicode=True, Dumper=CustomDumper)
 
 

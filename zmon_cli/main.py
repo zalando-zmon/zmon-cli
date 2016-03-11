@@ -232,7 +232,7 @@ def members(ctx):
     pass
 
 
-@cli.group('onetime-token', cls=AliasedGroup)
+@cli.group('onetime-tokens', cls=AliasedGroup)
 @click.pass_context
 def tv_tokens(ctx):
     """Manage onetime tokens for TVs/View only login"""

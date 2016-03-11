@@ -4,7 +4,7 @@ import textwrap
 import zmon_cli
 import urllib
 
-from clickclick import action, ok, error, info, AliasedGroup, print_table, OutputFormat
+from clickclick import Action, action, ok, error, info, AliasedGroup, print_table, OutputFormat
 
 import click
 import clickclick
@@ -97,6 +97,35 @@ def cli(ctx, config_file, verbose):
         with open(fn) as fd:
             data = yaml.safe_load(fd)
     ctx.obj = data
+
+
+@cli.command()
+@click.option('-c', '--config-file', help='Use alternative config file', default=DEFAULT_CONFIG_FILE, metavar='PATH')
+@click.pass_context
+def configure(ctx, config_file):
+    '''Configure ZMON URL and credentials'''
+
+    while True:
+        url = click.prompt('Please enter the ZMON base URL (e.g. https://demo.zmon.io/api/v1)',
+                           default=ctx.obj.get('url'))
+        with Action('Checking {}..'.format(url)) as act:
+            try:
+                requests.get(url, timeout=5, allow_redirects=False)
+                break
+            except:
+                act.error('ERROR')
+
+    if click.confirm('Is your ZMON using GitHub for authentication?'):
+        token = click.prompt('Your personal access token (optional, only needed for GitHub auth)')
+    else:
+        token = None
+
+    data = {'url': url, 'token': token}
+
+    fn = os.path.expanduser(config_file)
+    with Action('Writing configuration to {}..'.format(fn)):
+        with open(fn, 'w') as fd:
+            yaml.safe_dump(data, fd, default_flow_style=False)
 
 
 def query_password(user):

@@ -5,6 +5,19 @@ from click.testing import CliRunner
 from zmon_cli.main import cli
 
 
+def test_configure(monkeypatch):
+    get = MagicMock()
+    monkeypatch.setattr('requests.get', get)
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(cli, ['configure', '-c', 'test.yaml'], catch_exceptions=False, input='https://example.org\n\n')
+        assert 'Writing configuration' in result.output
+        with open('test.yaml') as fd:
+            data = yaml.safe_load(fd)
+        assert data['url'] == 'https://example.org'
+        assert data['token'] is None
+
+
 def test_status(monkeypatch):
     get = MagicMock()
     get.return_value.json.return_value = {'workers': [{'name': 'foo', 'check_invocations': 12377, 'last_execution_time': 1}]}

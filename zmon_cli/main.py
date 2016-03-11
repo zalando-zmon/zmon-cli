@@ -115,12 +115,11 @@ def configure(ctx, config_file):
             except:
                 act.error('ERROR')
 
+    data = {'url': url}
+
     if click.confirm('Is your ZMON using GitHub for authentication?'):
         token = click.prompt('Your personal access token (optional, only needed for GitHub auth)')
-    else:
-        token = None
-
-    data = {'url': url, 'token': token}
+        data['token'] = token
 
     fn = os.path.expanduser(config_file)
     with Action('Writing configuration to {}..'.format(fn)):

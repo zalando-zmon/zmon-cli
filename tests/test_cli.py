@@ -15,7 +15,7 @@ def test_configure(monkeypatch):
         with open('test.yaml') as fd:
             data = yaml.safe_load(fd)
         assert data['url'] == 'https://example.org'
-        assert data['token'] is None
+        assert 'token' not in data
 
 
 def test_status(monkeypatch):

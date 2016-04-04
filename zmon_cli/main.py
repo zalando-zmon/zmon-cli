@@ -242,7 +242,7 @@ def tv_tokens(ctx):
 def get_tv_token():
     """retrieve a new token"""
     r = post('/onetime-tokens', {})
-    action('getting one-time token: ...')
+    action('Getting one-time token: ...')
     ok(r.text)
 
 
@@ -380,7 +380,7 @@ def update(yaml_file):
     if 'status' not in check:
         check['status'] = 'ACTIVE'
 
-    action('Updating check definition... ')
+    action('Updating check definition..')
 
     if not check.get('owning_team'):
         raise click.UsageError('Missing "owning_team" in check definition')
@@ -431,7 +431,7 @@ def init_check_definition(yaml_file):
 def delete_check_definition(check_id):
     '''Delete an orphan check definition'''
 
-    action('delete check id {} ...'.format(check_id))
+    action('Deleting check {}..'.format(check_id))
     r = delete('/check-definitions/{}'.format(check_id))
     if r.status_code == 200:
         ok()
@@ -687,7 +687,7 @@ def grafana_update(ctx, yaml_file):
     if title is None:
         error("title is missing")
 
-    action('Updating dashboard title "{}"...'.format(title))
+    action('Updating dashboard "{}"..'.format(title))
     r = post('/grafana2-dashboards', json.dumps(data))
     if r.status_code == 200:
         ok()

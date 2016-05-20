@@ -741,6 +741,7 @@ def status(config):
     """Check system status"""
     response = get('/status')
     data = response.json()
+    click.secho('Alerts active: {}'.format(data.get('alerts_active')))
     info('Workers:')
     rows = []
     for worker in data.get('workers', []):

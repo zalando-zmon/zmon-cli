@@ -756,6 +756,25 @@ def status(config):
     print_table(['name', 'size'], rows)
 
 
+@cli.command()
+@click.argument("alert_id")
+@click.argument("entity_ids", nargs=-1)
+@click.pass_obj
+def data(config, alert_id, entity_ids):
+    """Get check data for alert and entities"""
+    response = get('/status/alert/{}/all-entities'.format(alert_id))
+    data = response.json()
+
+    if not entity_ids:
+        result = data
+    else:
+        result = list(filter(lambda x: x['entity'] in entity_ids, data))
+
+    values = dict((v['entity'], v['results'][0]['value']) for v in result if len(v['results']))
+
+    print(dump_yaml(values))
+
+
 def main():
     try:
         cli()

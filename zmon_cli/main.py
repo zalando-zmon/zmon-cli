@@ -756,6 +756,16 @@ def status(config):
     print_table(['name', 'size'], rows)
 
 
+@cli.command()
+@click.argument("alert_id")
+@click.argument("entity_ids", nargs=-1)
+@click.pass_obj
+def data(config, alert_id, entity_ids):
+    """Check system status"""
+    response = get('/status/alert/{}/all-entities'.format(alert_id))
+    data = response.json()
+    print(dump_yaml(data))
+
 def main():
     try:
         cli()

@@ -761,10 +761,19 @@ def status(config):
 @click.argument("entity_ids", nargs=-1)
 @click.pass_obj
 def data(config, alert_id, entity_ids):
-    """Check system status"""
+    """Get check data for alert and entities"""
     response = get('/status/alert/{}/all-entities'.format(alert_id))
     data = response.json()
-    print(dump_yaml(data))
+
+    if not entity_ids:
+        result = data
+    else:
+        result = list(filter(lambda x: x['entity'] in entity_ids, data))
+
+    values = dict((v['entity'], v['results'][0]['value']) for v in result if len(v['results']))
+
+    print(dump_yaml(values))
+
 
 def main():
     try:

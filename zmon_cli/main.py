@@ -52,6 +52,7 @@ yaml.add_representer(literal_unicode, literal_unicode_representer)
 
 class CustomDumper(yaml.Dumper):
     '''Custom dumper to sort mapping fields as we like'''
+
     def represent_mapping(self, tag, mapping, flow_style=None):
         node = yaml.Dumper.represent_mapping(self, tag, mapping, flow_style)
         node.value = sorted(node.value, key=lambda x: FIELD_SORT_INDEX.get(x[0].value, x[0].value))
@@ -253,9 +254,9 @@ def list_tv_token():
     r = get('/onetime-tokens')
     ts = r.json()
     for t in ts:
-        t["created"] = datetime.datetime.fromtimestamp(t["created"]/1000)
+        t["created"] = datetime.datetime.fromtimestamp(t["created"] / 1000)
         if t["bound_at"] is not None:
-            t["bound_at"] = datetime.datetime.fromtimestamp(t["bound_at"]/1000)
+            t["bound_at"] = datetime.datetime.fromtimestamp(t["bound_at"] / 1000)
 
     print(dump_yaml(ts))
 

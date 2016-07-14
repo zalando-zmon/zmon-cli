@@ -23,6 +23,7 @@ ALERT_DATA = 'status/alert'
 GRAFANA = 'grafana2-dashboards'
 GROUPS = 'groups'
 MEMBER = 'member'
+PHONE = 'phone'
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +136,7 @@ class Zmon:
         return resp
 
     @logged
-    def delete_entity(self, entity_id):
+    def delete_entity(self, entity_id) -> bool:
         """
         Delete entity from ZMon.
 
@@ -242,7 +243,7 @@ class Zmon:
         return self.json(resp)
 
     @logged
-    def get_tv_tokens(self):
+    def get_tv_tokens(self) -> str:
         resp = self.session.post(self.endpoint(TOKENS), json={})
 
         resp.raise_for_status()
@@ -279,7 +280,7 @@ class Zmon:
         return self.json(resp)
 
     @logged
-    def switch_active_user(self, group_name, user_name):
+    def switch_active_user(self, group_name, user_name) -> bool:
         resp = self.session.delete(self.endpoint(GROUPS, group_name, 'active'))
 
         if not resp.ok:
@@ -297,7 +298,7 @@ class Zmon:
         return resp.text == '1'
 
     @logged
-    def add_member(self, group_name, user_name):
+    def add_member(self, group_name, user_name) -> bool:
         resp = self.session.put(self.endpoint(GROUPS, group_name, MEMBER, user_name))
 
         resp.raise_for_status
@@ -305,9 +306,33 @@ class Zmon:
         return resp.text == '1'
 
     @logged
-    def remove_member(self, group_name, user_name):
+    def remove_member(self, group_name, user_name) -> bool:
         resp = self.session.delete(self.endpoint(GROUPS, group_name, MEMBER, user_name))
 
         resp.raise_for_status()
 
         return resp.text == '1'
+
+    @logged
+    def add_phone(self, member_email, phone_nr) -> bool:
+        resp = self.session.put(self.endpoint(GROUPS, member_email, PHONE, phone_nr))
+
+        resp.raise_for_status()
+
+        return resp.text == '1'
+
+    @logged
+    def remove_phone(self, member_email, phone_nr) -> bool:
+        resp = self.session.delete(self.endpoint(GROUPS, member_email, PHONE, phone_nr))
+
+        resp.raise_for_status()
+
+        return resp.text == '1'
+
+    @logged
+    def set_name(self, member_email, member_name):
+        resp = self.session.delete(self.endpoint(GROUPS, member_email, PHONE, member_name))
+
+        resp.raise_for_status()
+
+        return resp

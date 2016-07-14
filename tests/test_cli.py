@@ -10,7 +10,8 @@ def test_configure(monkeypatch):
     monkeypatch.setattr('requests.get', get)
     runner = CliRunner()
     with runner.isolated_filesystem():
-        result = runner.invoke(cli, ['configure', '-c', 'test.yaml'], catch_exceptions=False, input='https://example.org\n\n')
+        result = runner.invoke(
+            cli, ['configure', '-c', 'test.yaml'], catch_exceptions=False, input='https://example.org\n\n')
         assert 'Writing configuration' in result.output
         with open('test.yaml') as fd:
             data = yaml.safe_load(fd)
@@ -20,7 +21,9 @@ def test_configure(monkeypatch):
 
 def test_status(monkeypatch):
     get = MagicMock()
-    get.return_value.json.return_value = {'workers': [{'name': 'foo', 'check_invocations': 12377, 'last_execution_time': 1}]}
+    get.return_value.json.return_value = {
+        'workers': [{'name': 'foo', 'check_invocations': 12377, 'last_execution_time': 1}]
+    }
     monkeypatch.setattr('zmon_cli.main.get', get)
     runner = CliRunner()
     with runner.isolated_filesystem():
@@ -32,7 +35,9 @@ def test_status(monkeypatch):
 
 def test_status_zign(monkeypatch):
     get = MagicMock()
-    get.return_value.json.return_value = {'workers': [{'name': 'foo', 'check_invocations': 12377, 'last_execution_time': 1}]}
+    get.return_value.json.return_value = {
+        'workers': [{'name': 'foo', 'check_invocations': 12377, 'last_execution_time': 1}]
+    }
     get_token = MagicMock()
     get_token.return_value = '1298'
     monkeypatch.setattr('requests.get', get)
@@ -51,7 +56,9 @@ def test_status_zign(monkeypatch):
 
 def test_get_alert_definition(monkeypatch):
     get = MagicMock()
-    get.return_value.json.return_value = {'id': 123, 'check_definition_id': 9, 'name': 'Test', 'condition': '>0', 'foo': None}
+    get.return_value.json.return_value = {
+        'id': 123, 'check_definition_id': 9, 'name': 'Test', 'condition': '>0', 'foo': None
+    }
     monkeypatch.setattr('zmon_cli.main.get', get)
     runner = CliRunner()
     with runner.isolated_filesystem():
@@ -67,7 +74,7 @@ def test_update_check_definition_invalid(monkeypatch):
             yaml.dump({'url': 'foo', 'token': '123'}, fd)
         with open('check.yaml', 'w') as fd:
             yaml.safe_dump({}, fd)
-        result = runner.invoke(cli, ['check', 'update', 'check.yaml'], catch_exceptions=False)
+        runner.invoke(cli, ['check', 'update', 'check.yaml'], catch_exceptions=False)
         assert 'Missing "owning_team" in result.output'
 
 

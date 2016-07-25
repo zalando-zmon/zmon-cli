@@ -16,6 +16,7 @@ import yaml
 import urllib.parse
 import zign.api
 import datetime
+import time
 
 import keyring
 
@@ -773,6 +774,33 @@ def data(config, alert_id, entity_ids):
     values = dict((v['entity'], v['results'][0]['value']) for v in result if len(v['results']))
 
     print(dump_yaml(values))
+
+
+@cli.group()
+def downtimes():
+    pass
+
+
+@downtimes.command('create')
+@click.argument("entity_ids", nargs=-1)
+@click.option('-s', '--start-time')
+@click.option('-e', '--end-time')
+@click.option('-c', '--comment')
+@click.pass_obj
+def create_downtime(config, entity_ids, start_time, end_time, comment):
+    if not entity_ids:
+        raise click.UsageError('At least one entity ID must be specified')
+    # FIXME: use values provided by user
+    start_ts = time.time()
+    end_ts = time.time() + 3600
+    data = {
+            'entities': entity_ids,
+            'comment': comment or 'downtime by ZMON CLI',
+            'start_time': start_ts,
+            'end_time': end_ts
+            }
+    response = post('/downtimes', json.dumps(data))
+    print(response.json())
 
 
 def main():

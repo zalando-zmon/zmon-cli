@@ -16,6 +16,7 @@ import yaml
 import urllib.parse
 import zign.api
 import datetime
+import time
 
 import keyring
 
@@ -464,7 +465,7 @@ def render_entities(output, key=None, value=''):
     if key:
         r = get('/entities/?query={}'.format(json.dumps({key: value})))
     else:
-        r = get('/entities/')
+        r = get('/entities')
 
     entities = r.json()
     rows = []
@@ -524,7 +525,7 @@ def delete_entity(ctx, entity_id):
     '''Delete a single entity by ID'''
     action("Deleting entity {}..".format(entity_id))
     try:
-        r = delete('/entities/?id={}'.format(urllib.parse.quote_plus(entity_id)))
+        r = delete('/entities/{}'.format(entity_id))
         if r.status_code == 200 and r.text == "1":
             ok()
         else:
@@ -539,7 +540,7 @@ def delete_entity(ctx, entity_id):
 def get_entity(ctx, entity_id):
     '''Get a single entity by ID'''
     try:
-        r = get('/entities/{}/'.format(urllib.parse.quote_plus(entity_id)))
+        r = get('/entities/{}'.format(entity_id))
         if r.status_code == 200 and r.text != "":
             print(dump_yaml(r.json()))
         else:
@@ -773,6 +774,33 @@ def data(config, alert_id, entity_ids):
     values = dict((v['entity'], v['results'][0]['value']) for v in result if len(v['results']))
 
     print(dump_yaml(values))
+
+
+@cli.group()
+def downtimes():
+    pass
+
+
+@downtimes.command('create')
+@click.argument("entity_ids", nargs=-1)
+@click.option('-d', '--duration', type=int, help='downtime duration in minutes', default=60)
+@click.option('-c', '--comment')
+@click.pass_obj
+def create_downtime(config, entity_ids, duration, comment):
+    if not entity_ids:
+        raise click.UsageError('At least one entity ID must be specified')
+    start_ts = time.time()
+    end_ts = time.time() + (duration * 60)
+    data = {
+            'entities': entity_ids,
+            'comment': comment or 'downtime by ZMON CLI',
+            'start_time': start_ts,
+            'end_time': end_ts
+            }
+    with Action('Creating downtime..'):
+        response = post('/downtimes', json.dumps(data))
+        result = response.json()
+    print(dump_yaml(result))
 
 
 def main():

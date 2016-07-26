@@ -783,16 +783,14 @@ def downtimes():
 
 @downtimes.command('create')
 @click.argument("entity_ids", nargs=-1)
-@click.option('-s', '--start-time')
-@click.option('-e', '--end-time')
+@click.option('-d', '--duration', type=int, help='downtime duration in minutes')
 @click.option('-c', '--comment')
 @click.pass_obj
-def create_downtime(config, entity_ids, start_time, end_time, comment):
+def create_downtime(config, entity_ids, duration, comment):
     if not entity_ids:
         raise click.UsageError('At least one entity ID must be specified')
-    # FIXME: use values provided by user
     start_ts = time.time()
-    end_ts = time.time() + 3600
+    end_ts = time.time() + (duration * 60)
     data = {
             'entities': entity_ids,
             'comment': comment or 'downtime by ZMON CLI',

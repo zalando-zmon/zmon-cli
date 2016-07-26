@@ -465,7 +465,7 @@ def render_entities(output, key=None, value=''):
     if key:
         r = get('/entities/?query={}'.format(json.dumps({key: value})))
     else:
-        r = get('/entities/')
+        r = get('/entities')
 
     entities = r.json()
     rows = []
@@ -525,7 +525,7 @@ def delete_entity(ctx, entity_id):
     '''Delete a single entity by ID'''
     action("Deleting entity {}..".format(entity_id))
     try:
-        r = delete('/entities/?id={}'.format(urllib.parse.quote_plus(entity_id)))
+        r = delete('/entities/{}'.format(entity_id))
         if r.status_code == 200 and r.text == "1":
             ok()
         else:
@@ -540,7 +540,7 @@ def delete_entity(ctx, entity_id):
 def get_entity(ctx, entity_id):
     '''Get a single entity by ID'''
     try:
-        r = get('/entities/{}/'.format(urllib.parse.quote_plus(entity_id)))
+        r = get('/entities/{}'.format(entity_id))
         if r.status_code == 200 and r.text != "":
             print(dump_yaml(r.json()))
         else:

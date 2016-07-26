@@ -799,8 +799,10 @@ def create_downtime(config, entity_ids, start_time, end_time, comment):
             'start_time': start_ts,
             'end_time': end_ts
             }
-    response = post('/downtimes', json.dumps(data))
-    print(response.json())
+    with Action('Creating downtime..'):
+        response = post('/downtimes', json.dumps(data))
+        result = response.json()
+    print(dump_yaml(result))
 
 
 def main():

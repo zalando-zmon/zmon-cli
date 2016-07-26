@@ -783,7 +783,7 @@ def downtimes():
 
 @downtimes.command('create')
 @click.argument("entity_ids", nargs=-1)
-@click.option('-d', '--duration', type=int, help='downtime duration in minutes')
+@click.option('-d', '--duration', type=int, help='downtime duration in minutes', default=60)
 @click.option('-c', '--comment')
 @click.pass_obj
 def create_downtime(config, entity_ids, duration, comment):

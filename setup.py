@@ -52,13 +52,17 @@ CLASSIFIERS = [
     'Topic :: System :: Networking :: Monitoring'
 ]
 
-CONSOLE_SCRIPTS = ['zmon = zmon_cli.main:main']
+CONSOLE_SCRIPTS = ['zmon = zmon_cli._main:main']
 
 
 class PyTest(TestCommand):
 
-    user_options = [('cov=', None, 'Run coverage'), ('cov-xml=', None, 'Generate junit xml report'), ('cov-html=',
-                    None, 'Generate junit html report'), ('junitxml=', None, 'Generate xml of test results')]
+    user_options = [
+        ('cov=', None, 'Run coverage'),
+        ('cov-xml=', None, 'Generate junit xml report'),
+        ('cov-html=', None, 'Generate junit html report'),
+        ('junitxml=', None, 'Generate xml of test results'),
+    ]
 
     def initialize_options(self):
         TestCommand.initialize_options(self)

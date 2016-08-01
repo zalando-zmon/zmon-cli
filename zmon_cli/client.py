@@ -209,14 +209,14 @@ class Zmon:
             resp = self.session.post(self.endpoint(DASHBOARD, dashboard['id']), json=dashboard)
 
             return self.json(resp)
-
-        # new dashboard
-        logger.debug('Adding new dashboard ...')
-        resp = self.session.post(self.endpoint(DASHBOARD), json=dashboard)
+        else:
+            # new dashboard
+            logger.debug('Adding new dashboard ...')
+            resp = self.session.post(self.endpoint(DASHBOARD), json=dashboard)
 
         resp.raise_for_status()
 
-        return resp.text
+        return self.json(resp)
 
 ########################################################################################################################
 # CHECK-DEFS

@@ -4,7 +4,7 @@ import yaml
 
 import click
 
-from clickclick import AliasedGroup, Action, action, error, ok
+from clickclick import AliasedGroup, Action, action, error
 
 from zmon_cli.cmds.cli import cli, output_option
 from zmon_cli.output import dump_yaml, render_entities
@@ -42,8 +42,9 @@ def get_entity(ctx, entity_id):
 @output_option
 def filter_entities(ctx, key, value, output):
     '''List entities filtered by a certain key'''
-    entities = ctx.obj.client.get_entities(query={key: value})
-    render_entities(entities, output)
+    with Action('Retrieving and filtering entities ...', nl=True):
+        entities = ctx.obj.client.get_entities(query={key: value})
+        render_entities(entities, output)
 
 
 @entities.command('push')
@@ -60,12 +61,11 @@ def push_entity(ctx, entity):
     if not isinstance(data, list):
         data = [data]
 
-    with Action('Creating new entities ...'):
+    with Action('Creating new entities ...', nl=True):
         for e in data:
             action('\nCreating entity {} ...'.format(e['id']))
             try:
                 ctx.obj.client.add_entity(e)
-                ok()
             except Exception as e:
                 error('Exception while adding entity: {}'.format(str(e)))
 
@@ -76,7 +76,7 @@ def push_entity(ctx, entity):
 def delete_entity(ctx, entity_id):
     """Delete a single entity by ID"""
 
-    with Action('Deleting entity {} ...'.format(entity_id)):
+    with Action('Deleting entity {} ...'.format(entity_id)) as act:
         deleted = ctx.obj.client.delete_entity(entity_id)
         if not deleted:
-            error('Delete failed')
+            act.error('Delete failed')

@@ -31,9 +31,10 @@ def create_downtime(ctx, entity_ids, duration, comment):
         'end_time': end_ts
     }
 
-    with Action('Creating downtime ...'):
+    with Action('Creating downtime ...', nl=True) as act:
         try:
             new_downtime = ctx.obj.client.create_downtime(downtime)
             print(dump_yaml(new_downtime))
         except ZmonArgumentError as e:
-            click.UsageError(str(e))
+            act.error('Invalid downtime')
+            act.error(str(e))

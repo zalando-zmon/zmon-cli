@@ -13,7 +13,7 @@ from zmon_cli.output import dump_yaml
 def data(ctx, alert_id, entity_ids):
     """Get check data for alert and entities"""
 
-    with Action('Retrieving alert data ...'):
+    with Action('Retrieving alert data ...', nl=True):
         data = ctx.obj.client.get_alert_data(alert_id)
 
         if not entity_ids:

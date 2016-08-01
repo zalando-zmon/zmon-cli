@@ -21,7 +21,7 @@ def grafana(ctx):
 @click.pass_context
 def grafana_get(ctx, dashboard_id):
     """Get ZMON grafana dashboard"""
-    with Action('Retrieving grafana dashboard ...'):
+    with Action('Retrieving grafana dashboard ...', nl=True):
         dashboard = ctx.obj.client.get_grafana_dashboard(dashboard_id)
         print(dump_yaml(dashboard))
 
@@ -35,8 +35,9 @@ def grafana_update(ctx, yaml_file):
 
     title = dashboard.get('dashboard', {}).get('title', '')
 
-    with Action('Updating dashboard {} ...'.format(title)):
+    with Action('Updating dashboard {} ...'.format(title), nl=True) as act:
         try:
-            ctx.obj.client.update_grafana_dashboard(dashboard)
+            g = ctx.obj.client.update_grafana_dashboard(dashboard)
+            print(g)
         except ZmonArgumentError as e:
-            click.UsageError(str(e))
+            act.error(e)

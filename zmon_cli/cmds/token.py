@@ -2,7 +2,7 @@ from datetime import datetime
 
 import click
 
-from clickclick import AliasedGroup, Action
+from clickclick import AliasedGroup, Action, ok
 
 from zmon_cli.cmds.cli import cli
 from zmon_cli.output import dump_yaml
@@ -23,16 +23,16 @@ def tv_tokens(ctx):
 @click.pass_context
 def get_tv_token(ctx):
     """Retrieve a new token"""
-    with Action('Retrieving new one-time token ...'):
+    with Action('Retrieving new one-time token ...', nl=True):
         token = ctx.obj.client.get_tv_token()
-        print(token)
+        ok(token)
 
 
 @tv_tokens.command('list')
 @click.pass_context
 def list_tv_token(ctx):
     """List onetime tokens for your user"""
-    with Action('Retrieving onetime tokens ...'):
+    with Action('Retrieving onetime tokens ...', nl=True):
         tokens = ctx.obj.client.list_tv_tokens()
 
         for t in tokens:

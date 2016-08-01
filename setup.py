@@ -52,7 +52,7 @@ CLASSIFIERS = [
     'Topic :: System :: Networking :: Monitoring'
 ]
 
-CONSOLE_SCRIPTS = ['zmon = zmon_cli._main:main']
+CONSOLE_SCRIPTS = ['zmon = zmon_cli.main:main']
 
 
 class PyTest(TestCommand):

@@ -2,7 +2,7 @@ import yaml
 
 import click
 
-from clickclick import AliasedGroup, Action, error
+from clickclick import AliasedGroup, Action, ok
 
 from zmon_cli.cmds.cli import cli
 from zmon_cli.output import dump_yaml
@@ -37,6 +37,7 @@ def init(yaml_file):
     }
 
     yaml_file.write(dump_yaml(data).encode('utf-8'))
+    ok()
 
 
 @check_definitions.command('get')
@@ -44,7 +45,7 @@ def init(yaml_file):
 @click.pass_context
 def get_check_definition(ctx, check_id):
     """Get a single check definition"""
-    with Action('Retrieving check definition ...'):
+    with Action('Retrieving check definition ...', nl=True):
         check = ctx.obj.client.get_check_definition(check_id)
 
         keys = list(check.keys())
@@ -64,12 +65,13 @@ def update(ctx, yaml_file):
 
     check['last_modified_by'] = ctx.obj.get('user', 'unknown')
 
-    with Action('Updating check definition ...'):
+    with Action('Updating check definition ...', nl=True) as act:
         try:
             check = ctx.obj.client.update_check_definition(check)
             print(ctx.obj.client.check_definition_url(check))
         except ZmonArgumentError as e:
-            click.UsageError(str(e))
+            act.error('Invalid check definition')
+            act.error(str(e))
 
 
 @check_definitions.command('delete')
@@ -78,8 +80,8 @@ def update(ctx, yaml_file):
 def delete_check_definition(ctx, check_id):
     """Delete an orphan check definition"""
 
-    with Action('Deleting check {} ...'.format(check_id)):
+    with Action('Deleting check {} ...'.format(check_id)) as act:
         resp = ctx.obj.client.delete_check_definition(check_id)
 
         if not resp.ok:
-            error(resp.text)
+            act.error(resp.text)

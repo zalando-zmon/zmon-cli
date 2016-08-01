@@ -203,7 +203,7 @@ class Zmon:
 
     @logged
     def update_dashboard(self, dashboard):
-        if 'id' in dashboard:
+        if 'id' in dashboard and dashboard['id']:
             logger.debug('Updating dashboard with ID: {} ...'.format(dashboard['id']))
 
             resp = self.session.post(self.endpoint(DASHBOARD, dashboard['id']), json=dashboard)
@@ -273,8 +273,6 @@ class Zmon:
 
         resp = self.session.post(self.endpoint(ALERT_DEF), json=alert_definition)
 
-        import ipdb;ipdb.set_trace()
-
         return self.json(resp)
 
     @logged
@@ -293,6 +291,12 @@ class Zmon:
 
         resp = self.session.put(
             self.endpoint(ALERT_DEF, alert_definition['id']), json=alert_definition)
+
+        return self.json(resp)
+
+    @logged
+    def delete_alert_definition(self, alert_definition_id):
+        resp = self.session.delete(self.endpoint(ALERT_DEF, alert_definition_id))
 
         return self.json(resp)
 
@@ -332,9 +336,9 @@ class Zmon:
 
     @logged
     def update_grafana_dashboard(self, grafana_dashboard):
-        if 'id' not in grafana_dashboard:
+        if 'id' not in grafana_dashboard['dashboard']:
             raise ZmonArgumentError('Grafana dashboard must have id')
-        elif 'title' not in grafana_dashboard:
+        elif 'title' not in grafana_dashboard['dashboard']:
             raise ZmonArgumentError('Grafana dashboard must have title')
 
         resp = self.session.post(self.endpoint(GRAFANA), json=grafana_dashboard)

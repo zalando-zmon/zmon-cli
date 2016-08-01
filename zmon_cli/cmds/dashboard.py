@@ -2,7 +2,7 @@ import yaml
 
 import click
 
-from clickclick import AliasedGroup, Action
+from clickclick import AliasedGroup, Action, ok
 
 from zmon_cli.cmds.cli import cli
 from zmon_cli.output import dump_yaml
@@ -15,12 +15,37 @@ def dashboard(ctx):
     pass
 
 
+@dashboard.command('init')
+@click.argument('yaml_file', type=click.File('wb'))
+@click.pass_context
+def init(ctx, yaml_file):
+    """Initialize a new dashboard YAML file"""
+    name = click.prompt('Dashboard name', default='Example dashboard')
+    alert_teams = click.prompt('Alert Teams (comma separated)', default='Team1, Team2')
+
+    user = ctx.obj.config.get('user', 'unknown')
+
+    data = {
+        'id': '',
+        'name': name,
+        'last_modified_by': user,
+        'alert_teams': [t.strip() for t in alert_teams.split(',')],
+        'tags': [],
+        'view_mode': 'FULL',
+        'shared_teams': [],
+        'widget_configuration': [],
+    }
+
+    yaml_file.write(dump_yaml(data).encode('utf-8'))
+    ok()
+
+
 @dashboard.command('get')
 @click.argument("dashboard_id", type=int)
 @click.pass_context
 def dashboard_get(ctx, dashboard_id):
     """Get ZMON dashboard"""
-    with Action('Retrieving dashboard ...'):
+    with Action('Retrieving dashboard ...', nl=True):
         dashboard = ctx.obj.client.get_dashboard(dashboard_id)
         print(dump_yaml(dashboard))
 
@@ -39,5 +64,6 @@ def dashboard_update(ctx, yaml_file):
         msg = 'Updating dashboard {} ...'.format(dashboard.get('id'))
 
     # TODO: check return value from API!
-    with Action(msg):
-        ctx.obj.client.update_dashboard(dashboard)
+    with Action(msg, nl=True):
+        dash_id = ctx.obj.client.update_dashboard(dashboard)
+        print(dash_id)

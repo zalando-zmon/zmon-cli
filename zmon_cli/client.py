@@ -34,7 +34,7 @@ ALERT_DETAILS_VIEW_URL = '#/alert-details/'
 
 logger = logging.getLogger(__name__)
 
-valid_entity_id_re = re.compile('^[a-z0-9-\[\]\:]+$')
+valid_entity_id_re = re.compile('^[a-zA-Z0-9-@._\[\]\:]+$')
 
 
 class ZmonError(Exception):
@@ -278,7 +278,7 @@ class Zmon:
     @logged
     def update_alert_definition(self, alert_definition):
         if 'last_modified_by' not in alert_definition:
-            raise ZmonArgumentError('Alert definition must have last_modified_by')
+            raise ZmonArgumentError('Alert definition must have "last_modified_by"')
 
         if 'id' not in alert_definition:
             raise ZmonArgumentError('Alert definition must have "id"')
@@ -311,13 +311,13 @@ class Zmon:
 ########################################################################################################################
 
     @logged
-    def list_tv_tokens(self):
+    def list_onetime_tokens(self):
         resp = self.session.get(self.endpoint(TOKENS))
 
         return self.json(resp)
 
     @logged
-    def get_tv_token(self):
+    def get_onetime_token(self):
         resp = self.session.post(self.endpoint(TOKENS), json={})
 
         resp.raise_for_status()
@@ -351,10 +351,10 @@ class Zmon:
 
     @logged
     def create_downtime(self, downtime):
-        if 'entities' not in downtime or not downtime.get('entities'):
+        if not downtime.get('entities'):
             raise ZmonArgumentError('At least one entity ID should be specified')
 
-        if 'start_time' not in downtime or 'end_time' not in downtime:
+        if not downtime.get('start_time') or not downtime.get('end_time'):
             raise ZmonArgumentError('Downtime must specify "start_time" and "end_time"')
 
         resp = self.session.post(self.endpoint(DOWNTIME), json=downtime)
@@ -398,12 +398,6 @@ class Zmon:
         return resp.text == '1'
 
     @logged
-    def get_member(self, user_name):
-        resp = self.session.put(self.endpoint(GROUPS, MEMBER, user_name))
-
-        return self.json(resp)
-
-    @logged
     def remove_member(self, group_name, user_name):
         resp = self.session.delete(self.endpoint(GROUPS, group_name, MEMBER, user_name))
 
@@ -429,7 +423,7 @@ class Zmon:
 
     @logged
     def set_name(self, member_email, member_name):
-        resp = self.session.delete(self.endpoint(GROUPS, member_email, PHONE, member_name))
+        resp = self.session.put(self.endpoint(GROUPS, member_email, PHONE, member_name))
 
         resp.raise_for_status()
 

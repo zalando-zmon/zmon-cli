@@ -24,7 +24,7 @@ def tv_tokens(ctx):
 def get_tv_token(ctx):
     """Retrieve a new token"""
     with Action('Retrieving new one-time token ...', nl=True):
-        token = ctx.obj.client.get_tv_token()
+        token = ctx.obj.client.get_onetime_token()
         ok(token)
 
 
@@ -33,7 +33,7 @@ def get_tv_token(ctx):
 def list_tv_token(ctx):
     """List onetime tokens for your user"""
     with Action('Retrieving onetime tokens ...', nl=True):
-        tokens = ctx.obj.client.list_tv_tokens()
+        tokens = ctx.obj.client.list_onetime_tokens()
 
         for t in tokens:
             t['created'] = datetime.fromtimestamp(t['created'] / 1000)

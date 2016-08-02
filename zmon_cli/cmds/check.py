@@ -4,14 +4,14 @@ import click
 
 from clickclick import AliasedGroup, Action, ok
 
-from zmon_cli.cmds.cli import cli
+from zmon_cli.cmds.command import cli, get_client
 from zmon_cli.output import dump_yaml
 from zmon_cli.client import ZmonArgumentError
 
 
 @cli.group('check-definitions', cls=AliasedGroup)
-@click.pass_context
-def check_definitions(ctx):
+@click.pass_obj
+def check_definitions(obj):
     """Manage check definitions"""
     pass
 
@@ -42,11 +42,13 @@ def init(yaml_file):
 
 @check_definitions.command('get')
 @click.argument('check_id', type=int)
-@click.pass_context
-def get_check_definition(ctx, check_id):
+@click.pass_obj
+def get_check_definition(obj, check_id):
     """Get a single check definition"""
+    client = get_client(obj.config)
+
     with Action('Retrieving check definition ...', nl=True):
-        check = ctx.obj.client.get_check_definition(check_id)
+        check = client.get_check_definition(check_id)
 
         keys = list(check.keys())
         for k in keys:
@@ -58,17 +60,19 @@ def get_check_definition(ctx, check_id):
 
 @check_definitions.command('update')
 @click.argument('yaml_file', type=click.File('rb'))
-@click.pass_context
-def update(ctx, yaml_file):
+@click.pass_obj
+def update(obj, yaml_file):
     """Update a single check definition"""
     check = yaml.safe_load(yaml_file)
 
-    check['last_modified_by'] = ctx.obj.get('user', 'unknown')
+    check['last_modified_by'] = obj.get('user', 'unknown')
+
+    client = get_client(obj.config)
 
     with Action('Updating check definition ...', nl=True) as act:
         try:
-            check = ctx.obj.client.update_check_definition(check)
-            print(ctx.obj.client.check_definition_url(check))
+            check = client.update_check_definition(check)
+            print(client.check_definition_url(check))
         except ZmonArgumentError as e:
             act.error('Invalid check definition')
             act.error(str(e))
@@ -76,12 +80,13 @@ def update(ctx, yaml_file):
 
 @check_definitions.command('delete')
 @click.argument('check_id', type=int)
-@click.pass_context
-def delete_check_definition(ctx, check_id):
+@click.pass_obj
+def delete_check_definition(obj, check_id):
     """Delete an orphan check definition"""
+    client = get_client(obj.config)
 
     with Action('Deleting check {} ...'.format(check_id)) as act:
-        resp = ctx.obj.client.delete_check_definition(check_id)
+        resp = client.delete_check_definition(check_id)
 
         if not resp.ok:
             act.error(resp.text)

@@ -2,7 +2,13 @@ import yaml
 from unittest.mock import MagicMock
 from click.testing import CliRunner
 
+
 from zmon_cli.main import cli
+from zmon_cli.client import Zmon
+
+
+def get_client(config):
+    return Zmon('https://zmon-api', token='123')
 
 
 def test_configure(monkeypatch):
@@ -30,6 +36,7 @@ def test_status(monkeypatch):
         'workers': [{'name': 'foo', 'check_invocations': 12377, 'last_execution_time': 1}]
     }
     monkeypatch.setattr('zmon_cli.client.Zmon.status', get)
+    monkeypatch.setattr('zmon_cli.cmds.command.get_client', get_client)
 
     runner = CliRunner()
 
@@ -51,8 +58,8 @@ def test_status_zign(monkeypatch):
     get_token.return_value = '1298'
 
     monkeypatch.setattr('zmon_cli.client.Zmon.status', get)
+    monkeypatch.setattr('zmon_cli.cmds.command.get_client', get_client)
     monkeypatch.setattr('zign.api.get_token', get_token)
-    monkeypatch.setattr('zmon_cli.config.DEFAULT_CONFIG_FILE', 'test.yaml')
 
     runner = CliRunner()
 
@@ -60,7 +67,7 @@ def test_status_zign(monkeypatch):
         with open('test.yaml', 'w') as fd:
             yaml.dump({'url': 'foo'}, fd)
 
-        result = runner.invoke(cli, ['status'], catch_exceptions=False)
+        result = runner.invoke(cli, ['-c', 'test.yaml', 'status'], catch_exceptions=False)
 
         assert 'foo' in result.output
         assert '12377' in result.output
@@ -76,11 +83,15 @@ def test_get_alert_definition(monkeypatch):
     }
 
     monkeypatch.setattr('zmon_cli.client.Zmon.get_alert_definition', get)
+    monkeypatch.setattr('zmon_cli.cmds.command.get_client', get_client)
 
     runner = CliRunner()
 
     with runner.isolated_filesystem():
-        result = runner.invoke(cli, ['alert', 'get', '123'], catch_exceptions=False)
+        with open('test.yaml', 'w') as fd:
+            yaml.dump({'url': 'foo'}, fd)
+
+        result = runner.invoke(cli, ['-c', 'test.yaml', 'alert', 'get', '123'], catch_exceptions=False)
 
         assert 'id: 123\ncheck_definition_id: 9\nname: Test\ncondition: |-\n  >0' in result.output.rstrip()
 
@@ -97,7 +108,7 @@ def test_update_check_definition_invalid(monkeypatch):
         with open('check.yaml', 'w') as fd:
             yaml.safe_dump({}, fd)
 
-        result = runner.invoke(cli, ['check', 'update', 'check.yaml'], catch_exceptions=False)
+        result = runner.invoke(cli, ['-c', 'test.yaml', 'check', 'update', 'check.yaml'], catch_exceptions=False)
 
         assert 'owning_team' in result.output
 
@@ -108,6 +119,7 @@ def test_update_check_definition(monkeypatch):
     post = MagicMock()
     post.return_value = {'id': 7}
     monkeypatch.setattr('zmon_cli.client.Zmon.update_check_definition', post)
+    monkeypatch.setattr('zmon_cli.cmds.command.get_client', get_client)
 
     runner = CliRunner()
 
@@ -118,6 +130,6 @@ def test_update_check_definition(monkeypatch):
         with open('check.yaml', 'w') as fd:
             yaml.safe_dump({'owning_team': 'myteam', 'command': 'do_stuff()'}, fd)
 
-        result = runner.invoke(cli, ['check', 'update', 'check.yaml'], catch_exceptions=False)
+        result = runner.invoke(cli, ['-c', 'test.yaml', 'check', 'update', 'check.yaml'], catch_exceptions=False)
 
         assert '/check-definitions/view/7' in result.output

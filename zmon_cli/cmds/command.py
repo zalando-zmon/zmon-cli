@@ -60,24 +60,25 @@ def cli(ctx, config_file, verbose):
     if os.path.exists(fn):
         config = get_config_data(config_file)
 
-    ctx.obj = EasyDict(config=config, client=get_client(config))
+    ctx.obj = EasyDict(config=config)
 
 
 @cli.command()
 @click.option('-c', '--config-file', help='Use alternative config file', default=DEFAULT_CONFIG_FILE, metavar='PATH')
-@click.pass_context
-def configure(ctx, config_file):
+@click.pass_obj
+def configure(obj, config_file):
     '''Configure ZMON URL and credentials'''
-    set_config_file(config_file, ctx.obj.get('url'))
+    set_config_file(config_file, obj.config.get('url'))
 
 
 @cli.command()
-@click.pass_context
-def status(ctx):
+@click.pass_obj
+def status(obj):
     """Check ZMON system status"""
+    client = get_client(obj.config)
     status = {}
     with Action('Retrieving status ...'):
-        status = ctx.obj.client.status()
+        status = client.status()
 
     click.secho('Alerts active: {}'.format(status.get('alerts_active')))
 

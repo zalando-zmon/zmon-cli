@@ -1,4 +1,4 @@
-from zmon_cli.cmds.cli import cli
+from zmon_cli.cmds.command import cli
 
 from zmon_cli.cmds.alert import alert_definitions
 from zmon_cli.cmds.check import check_definitions

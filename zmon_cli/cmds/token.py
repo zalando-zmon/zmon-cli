@@ -4,7 +4,7 @@ import click
 
 from clickclick import AliasedGroup, Action, ok
 
-from zmon_cli.cmds.cli import cli
+from zmon_cli.cmds.command import cli, get_client
 from zmon_cli.output import dump_yaml
 
 
@@ -13,27 +13,31 @@ from zmon_cli.output import dump_yaml
 ########################################################################################################################
 
 @cli.group('onetime-tokens', cls=AliasedGroup)
-@click.pass_context
-def tv_tokens(ctx):
+@click.pass_obj
+def tv_tokens(obj):
     """Manage onetime tokens for TVs/View only login"""
     pass
 
 
 @tv_tokens.command('get')
-@click.pass_context
-def get_tv_token(ctx):
+@click.pass_obj
+def get_tv_token(obj):
     """Retrieve a new token"""
+    client = get_client(obj.config)
+
     with Action('Retrieving new one-time token ...', nl=True):
-        token = ctx.obj.client.get_onetime_token()
+        token = client.get_onetime_token()
         ok(token)
 
 
 @tv_tokens.command('list')
-@click.pass_context
-def list_tv_token(ctx):
+@click.pass_obj
+def list_tv_token(obj):
     """List onetime tokens for your user"""
+    client = get_client(obj.config)
+
     with Action('Retrieving onetime tokens ...', nl=True):
-        tokens = ctx.obj.client.list_onetime_tokens()
+        tokens = client.list_onetime_tokens()
 
         for t in tokens:
             t['created'] = datetime.fromtimestamp(t['created'] / 1000)

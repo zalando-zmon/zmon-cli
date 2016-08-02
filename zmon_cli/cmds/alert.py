@@ -4,14 +4,14 @@ import click
 
 from clickclick import AliasedGroup, Action, ok
 
-from zmon_cli.cmds.cli import cli
+from zmon_cli.cmds.command import cli, get_client
 from zmon_cli.output import dump_yaml
 from zmon_cli.client import ZmonArgumentError
 
 
 @cli.group('alert-definitions', cls=AliasedGroup)
-@click.pass_context
-def alert_definitions(ctx):
+@click.pass_obj
+def alert_definitions(obj):
     """Manage alert definitions"""
     pass
 
@@ -48,11 +48,13 @@ def init(yaml_file):
 
 @alert_definitions.command('get')
 @click.argument('alert_id', type=int)
-@click.pass_context
-def get_alert_definition(ctx, alert_id):
+@click.pass_obj
+def get_alert_definition(obj, alert_id):
     """Get a single alert definition"""
+    client = get_client(obj.config)
+
     with Action('Retrieving alert definition ...', nl=True):
-        alert = ctx.obj.client.get_alert_definition(alert_id)
+        alert = client.get_alert_definition(alert_id)
 
         keys = list(alert.keys())
         for k in keys:
@@ -64,18 +66,20 @@ def get_alert_definition(ctx, alert_id):
 
 @alert_definitions.command('create')
 @click.argument('yaml_file', type=click.File('rb'))
-@click.pass_context
-def create_alert_definition(ctx, yaml_file):
+@click.pass_obj
+def create_alert_definition(obj, yaml_file):
     """Create a single alert definition"""
+    client = get_client(obj.config)
+
     alert = yaml.safe_load(yaml_file)
 
-    alert['last_modified_by'] = ctx.obj.config.get('user', 'unknown')
+    alert['last_modified_by'] = obj.config.get('user', 'unknown')
 
     with Action('Creating alert definition ...', nl=True) as act:
         try:
-            new_alert = ctx.obj.client.create_alert_definition(alert)
+            new_alert = client.create_alert_definition(alert)
 
-            print(ctx.obj.client.alert_details_url(new_alert))
+            print(client.alert_details_url(new_alert))
         except ZmonArgumentError as e:
             act.error('Invalid alert definition')
             act.error(str(e))
@@ -83,17 +87,19 @@ def create_alert_definition(ctx, yaml_file):
 
 @alert_definitions.command('update')
 @click.argument('yaml_file', type=click.File('rb'))
-@click.pass_context
-def update_alert_definition(ctx, yaml_file):
+@click.pass_obj
+def update_alert_definition(obj, yaml_file):
     """Update a single alert definition"""
     alert = yaml.safe_load(yaml_file)
 
-    alert['last_modified_by'] = ctx.obj.config.get('user', 'unknown')
+    alert['last_modified_by'] = obj.config.get('user', 'unknown')
+
+    client = get_client(obj.config)
 
     with Action('Updating alert definition ...', nl=True) as act:
         try:
-            ctx.obj.client.update_alert_definition(alert)
-            print(ctx.obj.client.alert_details_url(alert))
+            client.update_alert_definition(alert)
+            print(client.alert_details_url(alert))
         except ZmonArgumentError as e:
             act.error('Invalid alert definition')
             act.error(str(e))
@@ -101,8 +107,10 @@ def update_alert_definition(ctx, yaml_file):
 
 @alert_definitions.command('delete')
 @click.argument('alert_id', type=int)
-@click.pass_context
-def delete_alert_definition(ctx, alert_id):
+@click.pass_obj
+def delete_alert_definition(obj, alert_id):
     """Get a single alert definition"""
+    client = get_client(obj.config)
+
     with Action('Deleting alert definition ...'):
-        ctx.obj.client.delete_alert_definition(alert_id)
+        client.delete_alert_definition(alert_id)

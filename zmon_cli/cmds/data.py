@@ -2,19 +2,19 @@ import click
 
 from clickclick import Action
 
-from zmon_cli.cmds.cli import cli
+from zmon_cli.cmds.command import cli, get_client
 from zmon_cli.output import dump_yaml
 
 
 @cli.command()
 @click.argument('alert_id')
 @click.argument('entity_ids', nargs=-1)
-@click.pass_context
-def data(ctx, alert_id, entity_ids):
+@click.pass_obj
+def data(obj, alert_id, entity_ids):
     """Get check data for alert and entities"""
-
+    client = get_client(obj.config)
     with Action('Retrieving alert data ...', nl=True):
-        data = ctx.obj.client.get_alert_data(alert_id)
+        data = client.get_alert_data(alert_id)
 
         if not entity_ids:
             result = data

@@ -34,7 +34,8 @@ ALERT_DETAILS_VIEW_URL = '#/alert-details/'
 
 logger = logging.getLogger(__name__)
 
-valid_entity_id_re = re.compile('^[a-zA-Z0-9-@._\[\]\:]+$')
+parentheses_re = re.compile('[(]+|[)]+')
+invalid_entity_id_re = re.compile('[^a-zA-Z0-9-@_.\[\]\:]+')
 
 
 class ZmonError(Exception):
@@ -56,6 +57,14 @@ def logged(f):
             raise
 
     return wrapper
+
+
+def compare_entities(e1, e2):
+    return json.loads(json.dumps(e1)) == json.loads(json.dumps(e2))
+
+
+def get_valid_entity_id(e):
+    return invalid_entity_id_re.sub('-', parentheses_re.sub(lambda m: '[' if '(' in m.group() else ']', e.lower()))
 
 
 class Zmon:
@@ -92,7 +101,7 @@ class Zmon:
 
     @staticmethod
     def is_valid_entity_id(entity_id):
-        return valid_entity_id_re.match(entity_id) is not None
+        return invalid_entity_id_re.search(entity_id) is None
 
     @staticmethod
     def validate_check_command(src):

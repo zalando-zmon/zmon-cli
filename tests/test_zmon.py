@@ -23,6 +23,34 @@ def test_zmon_is_valid_id(monkeypatch, e, expected):
     assert Zmon.is_valid_entity_id(e) == expected
 
 
+def test_get_entity_id(monkeypatch, fx_ids):
+    inp, exp = fx_ids
+
+    print(client.get_valid_entity_id(inp))
+    assert client.get_valid_entity_id(inp) == exp
+
+
+@pytest.mark.parametrize('e1,e2,result', [
+    (
+        {'id': '1', 'nested': {'k': 'v', 'k2': 'v'}},
+        {'id': '1', 'nested': {'k2': 'v', 'k': 'v'}},
+        True
+    ),
+    (
+        {'id': '1', 'nested': {'k': 'v', 22: 22}},
+        {'id': '1', 'nested': {'22': 22, 'k': 'v'}},
+        True
+    ),
+    (
+        {'id': '1', 'nested': {'k': 'v', 22: 22, 'k3': {'list': [1, 2, 3]}}},
+        {'id': '1', 'nested': {'22': 22, 'k': 'v', 'k3': {'list': [1, 2]}}},
+        False
+    ),
+])
+def test_zmon_compare_entities(monkeypatch, e1, e2, result):
+    assert client.compare_entities(e1, e2) == result
+
+
 def test_zmon_view_urls(monkeypatch):
     zmon = Zmon(URL, token=TOKEN)
 

@@ -89,7 +89,7 @@ def test_get_alert_definition(monkeypatch):
 
     with runner.isolated_filesystem():
         with open('test.yaml', 'w') as fd:
-            yaml.dump({'url': 'foo'}, fd)
+            yaml.dump({'url': 'foo', 'token': 123}, fd)
 
         result = runner.invoke(cli, ['-c', 'test.yaml', 'alert', 'get', '123'], catch_exceptions=False)
 

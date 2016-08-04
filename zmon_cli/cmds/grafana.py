@@ -2,10 +2,10 @@ import yaml
 
 import click
 
-from clickclick import AliasedGroup, Action
+from clickclick import AliasedGroup, Action, ok
 
-from zmon_cli.cmds.command import cli, get_client
-from zmon_cli.output import dump_yaml
+from zmon_cli.cmds.command import cli, get_client, yaml_output_option, pretty_json
+from zmon_cli.output import Output
 from zmon_cli.client import ZmonArgumentError
 
 
@@ -19,13 +19,15 @@ def grafana(obj):
 @grafana.command('get')
 @click.argument('dashboard_id', type=click.STRING)
 @click.pass_obj
-def grafana_get(obj, dashboard_id):
+@yaml_output_option
+@pretty_json
+def grafana_get(obj, dashboard_id, output, pretty):
     """Get ZMON grafana dashboard"""
     client = get_client(obj.config)
 
-    with Action('Retrieving grafana dashboard ...', nl=True):
+    with Output('Retrieving grafana dashboard ...', nl=True, output=output, pretty_json=pretty) as act:
         dashboard = client.get_grafana_dashboard(dashboard_id)
-        print(dump_yaml(dashboard))
+        act.echo(dashboard)
 
 
 @grafana.command('update')
@@ -41,7 +43,7 @@ def grafana_update(obj, yaml_file):
 
     with Action('Updating dashboard {} ...'.format(title), nl=True) as act:
         try:
-            g = client.update_grafana_dashboard(dashboard)
-            print(g)
+            client.update_grafana_dashboard(dashboard)
+            ok(client.grafana_dashboard_url(dashboard))
         except ZmonArgumentError as e:
             act.error(e)

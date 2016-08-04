@@ -4,8 +4,8 @@ import click
 
 from clickclick import AliasedGroup, Action, ok
 
-from zmon_cli.cmds.command import cli, get_client
-from zmon_cli.output import dump_yaml
+from zmon_cli.cmds.command import cli, get_client, yaml_output_option, pretty_json
+from zmon_cli.output import dump_yaml, Output
 from zmon_cli.client import ZmonArgumentError
 
 
@@ -43,11 +43,13 @@ def init(yaml_file):
 @check_definitions.command('get')
 @click.argument('check_id', type=int)
 @click.pass_obj
-def get_check_definition(obj, check_id):
+@yaml_output_option
+@pretty_json
+def get_check_definition(obj, check_id, output, pretty):
     """Get a single check definition"""
     client = get_client(obj.config)
 
-    with Action('Retrieving check definition ...', nl=True):
+    with Output('Retrieving check definition ...', nl=True, output=output, pretty_json=pretty) as act:
         check = client.get_check_definition(check_id)
 
         keys = list(check.keys())
@@ -55,7 +57,7 @@ def get_check_definition(obj, check_id):
             if check[k] is None:
                 del check[k]
 
-        print(dump_yaml(check))
+        act.echo(check)
 
 
 @check_definitions.command('update')
@@ -72,7 +74,7 @@ def update(obj, yaml_file):
     with Action('Updating check definition ...', nl=True) as act:
         try:
             check = client.update_check_definition(check)
-            print(client.check_definition_url(check))
+            ok(client.check_definition_url(check))
         except ZmonArgumentError as e:
             act.error('Invalid check definition')
             act.error(str(e))

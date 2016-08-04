@@ -4,8 +4,8 @@ import click
 
 from clickclick import AliasedGroup, Action, ok
 
-from zmon_cli.cmds.command import cli, get_client
-from zmon_cli.output import dump_yaml
+from zmon_cli.cmds.command import cli, get_client, yaml_output_option, pretty_json
+from zmon_cli.output import Output
 
 
 ########################################################################################################################
@@ -15,7 +15,7 @@ from zmon_cli.output import dump_yaml
 @cli.group('onetime-tokens', cls=AliasedGroup)
 @click.pass_obj
 def tv_tokens(obj):
-    """Manage onetime tokens for TVs/View only login"""
+    """Manage onetime tokens for Monitors/View only login"""
     pass
 
 
@@ -27,16 +27,18 @@ def get_tv_token(obj):
 
     with Action('Retrieving new one-time token ...', nl=True):
         token = client.get_onetime_token()
-        ok(token)
+        ok(client.token_login_url(token.strip('"')))
 
 
 @tv_tokens.command('list')
 @click.pass_obj
-def list_tv_token(obj):
+@yaml_output_option
+@pretty_json
+def list_tv_token(obj, output, pretty):
     """List onetime tokens for your user"""
     client = get_client(obj.config)
 
-    with Action('Retrieving onetime tokens ...', nl=True):
+    with Output('Retrieving onetime tokens ...', nl=True, output=output, pretty_json=pretty) as act:
         tokens = client.list_onetime_tokens()
 
         for t in tokens:
@@ -44,4 +46,4 @@ def list_tv_token(obj):
             if t['bound_at'] is not None:
                 t['bound_at'] = datetime.fromtimestamp(t['bound_at'] / 1000)
 
-        print(dump_yaml(tokens))
+        act.echo(tokens)

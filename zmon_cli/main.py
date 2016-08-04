@@ -10,10 +10,3 @@ def main():
         cli()
     except requests.HTTPError as e:
         error('HTTP ERROR: {}'.format(e))
-
-
-if __name__ == '__main__':
-    try:
-        main()
-    except (KeyboardInterrupt, EOFError):
-        print('\nStopped by user')

@@ -4,8 +4,8 @@ import click
 
 from clickclick import AliasedGroup, Action, ok
 
-from zmon_cli.cmds.command import cli, get_client
-from zmon_cli.output import dump_yaml
+from zmon_cli.cmds.command import cli, get_client, yaml_output_option, pretty_json
+from zmon_cli.output import dump_yaml, Output
 from zmon_cli.client import ZmonArgumentError
 
 
@@ -49,11 +49,13 @@ def init(yaml_file):
 @alert_definitions.command('get')
 @click.argument('alert_id', type=int)
 @click.pass_obj
-def get_alert_definition(obj, alert_id):
+@yaml_output_option
+@pretty_json
+def get_alert_definition(obj, alert_id, output, pretty):
     """Get a single alert definition"""
     client = get_client(obj.config)
 
-    with Action('Retrieving alert definition ...', nl=True):
+    with Output('Retrieving alert definition ...', nl=True, output=output, pretty_json=pretty) as act:
         alert = client.get_alert_definition(alert_id)
 
         keys = list(alert.keys())
@@ -61,7 +63,7 @@ def get_alert_definition(obj, alert_id):
             if alert[k] is None:
                 del alert[k]
 
-        print(dump_yaml(alert))
+        act.echo(alert)
 
 
 @alert_definitions.command('create')
@@ -78,8 +80,7 @@ def create_alert_definition(obj, yaml_file):
     with Action('Creating alert definition ...', nl=True) as act:
         try:
             new_alert = client.create_alert_definition(alert)
-
-            print(client.alert_details_url(new_alert))
+            ok(client.alert_details_url(new_alert))
         except ZmonArgumentError as e:
             act.error('Invalid alert definition')
             act.error(str(e))
@@ -99,7 +100,7 @@ def update_alert_definition(obj, yaml_file):
     with Action('Updating alert definition ...', nl=True) as act:
         try:
             client.update_alert_definition(alert)
-            print(client.alert_details_url(alert))
+            ok(client.alert_details_url(alert))
         except ZmonArgumentError as e:
             act.error('Invalid alert definition')
             act.error(str(e))

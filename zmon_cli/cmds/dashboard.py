@@ -4,8 +4,8 @@ import click
 
 from clickclick import AliasedGroup, Action, ok
 
-from zmon_cli.cmds.command import cli, get_client
-from zmon_cli.output import dump_yaml
+from zmon_cli.cmds.command import cli, get_client, yaml_output_option, pretty_json
+from zmon_cli.output import dump_yaml, Output
 
 
 @cli.group('dashboard', cls=AliasedGroup)
@@ -43,12 +43,14 @@ def init(obj, yaml_file):
 @dashboard.command('get')
 @click.argument("dashboard_id", type=int)
 @click.pass_obj
-def dashboard_get(obj, dashboard_id):
+@yaml_output_option
+@pretty_json
+def dashboard_get(obj, dashboard_id, output, pretty):
     """Get ZMON dashboard"""
     client = get_client(obj.config)
-    with Action('Retrieving dashboard ...', nl=True):
+    with Output('Retrieving dashboard ...', nl=True, output=output, pretty_json=pretty) as act:
         dashboard = client.get_dashboard(dashboard_id)
-        print(dump_yaml(dashboard))
+        act.echo(dashboard)
 
 
 @dashboard.command('update')
@@ -65,7 +67,6 @@ def dashboard_update(obj, yaml_file):
     if 'id' in dashboard:
         msg = 'Updating dashboard {} ...'.format(dashboard.get('id'))
 
-    # TODO: check return value from API!
     with Action(msg, nl=True):
         dash_id = client.update_dashboard(dashboard)
-        print(dash_id)
+        ok(client.dashboard_url(dash_id))

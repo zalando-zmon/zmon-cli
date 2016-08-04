@@ -1,19 +1,20 @@
 import click
 
-from clickclick import Action
-
-from zmon_cli.cmds.command import cli, get_client
-from zmon_cli.output import dump_yaml
+from zmon_cli.cmds.command import cli, get_client, yaml_output_option, pretty_json
+from zmon_cli.output import Output
 
 
 @cli.command()
 @click.argument('alert_id')
 @click.argument('entity_ids', nargs=-1)
 @click.pass_obj
-def data(obj, alert_id, entity_ids):
+@yaml_output_option
+@pretty_json
+def data(obj, alert_id, entity_ids, output, pretty):
     """Get check data for alert and entities"""
     client = get_client(obj.config)
-    with Action('Retrieving alert data ...', nl=True):
+
+    with Output('Retrieving alert data ...', nl=True, output=output, pretty_json=pretty) as act:
         data = client.get_alert_data(alert_id)
 
         if not entity_ids:
@@ -23,4 +24,4 @@ def data(obj, alert_id, entity_ids):
 
         values = {v['entity']: v['results'][0]['value'] for v in result if len(v['results'])}
 
-        print(dump_yaml(values))
+        act.echo(values)

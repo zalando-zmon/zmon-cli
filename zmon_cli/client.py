@@ -31,6 +31,9 @@ TOKENS = 'onetime-tokens'
 
 CHECK_DEF_VIEW_URL = '#/check-definitions/view/'
 ALERT_DETAILS_VIEW_URL = '#/alert-details/'
+DASHBOARD_VIEW_URL = '#/dashboards/views/'
+TOKEN_LOGIN_URL = 'tv/'
+GRAFANA_DASHBOARD_URL = 'grafana/dashboard/db/'
 
 logger = logging.getLogger(__name__)
 
@@ -110,12 +113,6 @@ class Zmon:
         except Exception as e:
             raise ZmonError('Invalid check command: {}'.format(e))
 
-    def check_definition_url(self, check_definition):
-        return self.endpoint(CHECK_DEF_VIEW_URL, check_definition['id'], base_url=self.base_url)
-
-    def alert_details_url(self, alert):
-        return self.endpoint(ALERT_DETAILS_VIEW_URL, alert['id'], base_url=self.base_url)
-
     def endpoint(self, *args, trailing_slash=True, base_url=None):
         parts = list(args)
 
@@ -130,6 +127,25 @@ class Zmon:
     def json(self, resp):
         resp.raise_for_status()
         return resp.json()
+
+########################################################################################################################
+# DEEPLINKS
+########################################################################################################################
+
+    def check_definition_url(self, check_definition):
+        return self.endpoint(CHECK_DEF_VIEW_URL, check_definition['id'], base_url=self.base_url)
+
+    def alert_details_url(self, alert):
+        return self.endpoint(ALERT_DETAILS_VIEW_URL, alert['id'], base_url=self.base_url)
+
+    def dashboard_url(self, dashboard_id):
+        return self.endpoint(DASHBOARD_VIEW_URL, dashboard_id, base_url=self.base_url)
+
+    def token_login_url(self, token):
+        return self.endpoint(TOKEN_LOGIN_URL, token, base_url=self.base_url)
+
+    def grafana_dashboard_url(self, dashboard):
+        return self.endpoint(GRAFANA_DASHBOARD_URL, dashboard['id'], base_url=self.base_url)
 
     @logged
     def status(self):

@@ -1,6 +1,6 @@
 import click
 
-from clickclick import Action, error, warning
+from clickclick import Action
 
 from zmon_cli.cmds.command import cli, get_client
 
@@ -12,11 +12,11 @@ def groups(ctx):
     client = get_client(ctx.obj.config)
 
     if not ctx.invoked_subcommand:
-        with Action('Retrieving groups ...'):
+        with Action('Retrieving groups ...', nl=True) as act:
             groups = client.get_groups()
 
             if len(groups) == 0:
-                warning('No groups found!')
+                act.warning('No groups found!')
 
             for g in groups:
                 print('Name: {} Id: {}'.format(g['name'], g['id']))
@@ -39,10 +39,10 @@ def groups(ctx):
 def switch_active(obj, group_name, user_name):
     client = get_client(obj.config)
 
-    with Action('Switching active user ...'):
+    with Action('Switching active user ...') as act:
         switched = client.switch_active_user(group_name, user_name)
         if not switched:
-            error('Failed to switch')
+            act.error('Failed to switch')
 
 
 @cli.group()
@@ -59,11 +59,11 @@ def members(obj):
 def member_add(obj, group_name, user_name):
     client = get_client(obj.config)
 
-    with Action('Adding user ...'):
+    with Action('Adding user ...') as act:
         added = client.add_member(group_name, user_name)
 
         if not added:
-            error('Failed to add member')
+            act.error('Failed to add member')
 
 
 @members.command('remove')
@@ -73,11 +73,11 @@ def member_add(obj, group_name, user_name):
 def member_remove(obj, group_name, user_name):
     client = get_client(obj.config)
 
-    with Action('Removing user ...'):
+    with Action('Removing user ...') as act:
         removed = client.remove_member(group_name, user_name)
 
         if not removed:
-            error('Failed to remove member')
+            act.error('Failed to remove member')
 
 
 @members.command('add-phone')
@@ -87,11 +87,11 @@ def member_remove(obj, group_name, user_name):
 def add_phone(obj, member_email, phone_nr):
     client = get_client(obj.config)
 
-    with Action('Adding phone ...'):
+    with Action('Adding phone ...') as act:
         added = client.add_phone(member_email, phone_nr)
 
         if not added:
-            error('Failed to add phone')
+            act.error('Failed to add phone')
 
 
 @members.command('remove-phone')
@@ -101,11 +101,11 @@ def add_phone(obj, member_email, phone_nr):
 def remove_phone(obj, member_email, phone_nr):
     client = get_client(obj.config)
 
-    with Action('Removing phone number ...'):
+    with Action('Removing phone number ...') as act:
         removed = client.remove_phone(member_email, phone_nr)
 
         if not removed:
-            error('Failed to remove phone')
+            act.error('Failed to remove phone')
 
 
 @members.command('change-name')

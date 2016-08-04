@@ -6,8 +6,8 @@ import click
 
 from clickclick import AliasedGroup, Action, action, error
 
-from zmon_cli.cmds.command import cli, get_client, output_option
-from zmon_cli.output import dump_yaml, render_entities
+from zmon_cli.cmds.command import cli, get_client, output_option, yaml_output_option, pretty_json
+from zmon_cli.output import render_entities, Output
 
 
 ########################################################################################################################
@@ -17,24 +17,29 @@ from zmon_cli.output import dump_yaml, render_entities
 @cli.group('entities', cls=AliasedGroup, invoke_without_command=True)
 @click.pass_context
 @output_option
-def entities(ctx, output):
+@pretty_json
+def entities(ctx, output, pretty):
     """Manage entities"""
-    client = get_client(ctx.obj.config)
     if not ctx.invoked_subcommand:
-        entities = client.get_entities()
-        render_entities(entities, output)
+        client = get_client(ctx.obj.config)
+
+        with Output('Retrieving all entities ...', output=output, printer=render_entities, pretty_json=pretty) as act:
+            entities = client.get_entities()
+            act.echo(entities)
 
 
 @entities.command('get')
 @click.argument('entity_id')
 @click.pass_obj
-def get_entity(obj, entity_id):
+@yaml_output_option
+@pretty_json
+def get_entity(obj, entity_id, output, pretty):
     """Get a single entity by ID"""
     client = get_client(obj.config)
-    with Action('Retrieving entity {} ...'.format(entity_id), nl=True):
-        entity = client.get_entity(entity_id)
 
-        click.secho(dump_yaml(entity), nl=True)
+    with Output('Retrieving entity {} ...'.format(entity_id), nl=True, output=output, pretty_json=pretty) as act:
+        entity = client.get_entity(entity_id)
+        act.echo(entity)
 
 
 @entities.command('filter')
@@ -42,12 +47,14 @@ def get_entity(obj, entity_id):
 @click.argument('value')
 @click.pass_obj
 @output_option
-def filter_entities(obj, key, value, output):
+@pretty_json
+def filter_entities(obj, key, value, output, pretty):
     """List entities filtered by a certain key"""
     client = get_client(obj.config)
-    with Action('Retrieving and filtering entities ...', nl=True):
+    with Output('Retrieving and filtering entities ...', nl=True, output=output, printer=render_entities,
+                pretty_json=pretty) as act:
         entities = client.get_entities(query={key: value})
-        render_entities(entities, output)
+        act.echo(entities)
 
 
 @entities.command('push')

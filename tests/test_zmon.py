@@ -62,6 +62,18 @@ def test_zmon_view_urls(monkeypatch):
     alert = {'id': 1}
     assert '{}#/alert-details/1/'.format(URL) == zmon.alert_details_url(alert)
 
+    # Dashboard
+    dashboard_id = 1
+    assert '{}#/dashboards/views/1/'.format(URL) == zmon.dashboard_url(dashboard_id)
+
+    # Token
+    token = '1234'
+    assert '{}/tv/1234/'.format(URL) == zmon.token_login_url(token)
+
+    # Grafana
+    dashboard = {'id': 'grafana-dash'}
+    assert '{}/grafana/dashboard/db/grafana-dash/'.format(URL) == zmon.grafana_dashboard_url(dashboard)
+
 
 def test_zmon_headers(monkeypatch):
     zmon = Zmon(URL, token=TOKEN)

@@ -1,6 +1,8 @@
+import json
+
 import yaml
 
-from clickclick import print_table, OutputFormat
+from clickclick import print_table, OutputFormat, action, secho, error, ok, info
 
 
 # fields to dump as literal blocks
@@ -53,6 +55,48 @@ yaml.add_representer(literal_unicode, literal_unicode_representer)
 ########################################################################################################################
 # RENDERERS
 ########################################################################################################################
+class Output:
+
+    def __init__(self, msg, ok_msg=' OK', nl=False, output='text', pretty_json=False, printer=None,
+                 suppress_exception=False):
+        self.msg = msg
+        self.ok_msg = ok_msg
+        self.output = output
+        self.nl = nl
+        self.errors = []
+        self.printer = printer
+        self.indent = 4 if pretty_json else None
+        self._suppress_exception = suppress_exception
+
+    def __enter__(self):
+        if self.output == 'text' and not self.printer:
+            action(self.msg)
+            if self.nl:
+                secho('')
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is None:
+            if self.output == 'text' and not self.printer and not self.errors:
+                ok(self.ok_msg)
+        elif not self._suppress_exception:
+            error(' EXCEPTION OCCURRED: {}'.format(exc_val))
+
+    def error(self, msg, **kwargs):
+        error(' {}'.format(msg), **kwargs)
+        self.errors.append(msg)
+
+    def echo(self, out):
+        if self.output == 'yaml':
+            print(dump_yaml(out))
+        elif self.output == 'json':
+            print(json.dumps(out, indent=self.indent))
+        elif self.printer:
+            self.printer(out, self.output)
+        else:
+            print(out)
+
+
 def render_entities(entities, output):
     rows = []
     for e in entities:
@@ -62,13 +106,35 @@ def render_entities(entities, output):
         key_values = []
 
         for k in s:
-            if k not in ('id', 'type'):
+            if k not in ('id', 'type', 'team'):
                 key_values.append('{}={}'.format(k, e[k]))
 
         row['data'] = ' '.join(key_values)
         rows.append(row)
 
-    rows.sort(key=lambda r: (r['id'], r['type']))
+    rows.sort(key=lambda r: (r['id'], r['type'], r['team']))
 
     with OutputFormat(output):
-        print_table('id type data'.split(), rows)
+        print_table('id type team data'.split(), rows)
+
+
+def render_status(status, output=None):
+    secho('Alerts active: {}'.format(status.get('alerts_active')))
+
+    info('Workers:')
+    rows = []
+    for worker in status.get('workers', []):
+        rows.append(worker)
+
+    rows.sort(key=lambda x: x.get('name'))
+
+    print_table(['name', 'check_invocations', 'last_execution_time'], rows)
+
+    info('Queues:')
+    rows = []
+    for queue in status.get('queues', []):
+        rows.append(queue)
+
+    rows.sort(key=lambda x: x.get('name'))
+
+    print_table(['name', 'size'], rows)

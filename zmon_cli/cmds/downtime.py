@@ -2,10 +2,10 @@ import time
 
 import click
 
-from clickclick import AliasedGroup, Action
+from clickclick import AliasedGroup
 
-from zmon_cli.cmds.command import cli, get_client
-from zmon_cli.output import dump_yaml
+from zmon_cli.cmds.command import cli, get_client, yaml_output_option, pretty_json
+from zmon_cli.output import Output
 from zmon_cli.client import ZmonArgumentError
 
 
@@ -20,7 +20,10 @@ def downtimes():
 @click.option('-d', '--duration', type=int, help='downtime duration in minutes', default=60)
 @click.option('-c', '--comment')
 @click.pass_obj
-def create_downtime(obj, entity_ids, duration, comment):
+@yaml_output_option
+@pretty_json
+def create_downtime(obj, entity_ids, duration, comment, output, pretty):
+    """Create downtime for specified entities"""
     client = get_client(obj.config)
 
     start_ts = time.time()
@@ -33,10 +36,10 @@ def create_downtime(obj, entity_ids, duration, comment):
         'end_time': end_ts
     }
 
-    with Action('Creating downtime ...', nl=True) as act:
+    with Output('Creating downtime ...', nl=True, output=output, pretty_json=pretty) as act:
         try:
             new_downtime = client.create_downtime(downtime)
-            print(dump_yaml(new_downtime))
+            act.echo(new_downtime)
         except ZmonArgumentError as e:
             act.error('Invalid downtime')
             act.error(str(e))

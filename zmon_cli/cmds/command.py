@@ -2,23 +2,29 @@ import click
 import logging
 import os
 
-from clickclick import AliasedGroup, Action, info
+from clickclick import AliasedGroup
 from easydict import EasyDict
 
 from zmon_cli import __version__
 
-from zmon_cli.output import print_table
-
 from zmon_cli.config import DEFAULT_CONFIG_FILE
 from zmon_cli.config import get_config_data, configure_logging, set_config_file
+
+from zmon_cli.output import Output, render_status
 
 from zmon_cli.client import Zmon
 
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
-output_option = click.option('-o', '--output', type=click.Choice(['text', 'json', 'tsv']), default='text',
+output_option = click.option('-o', '--output', type=click.Choice(['text', 'json', 'yaml']), default='text',
                              help='Use alternative output format')
+
+yaml_output_option = click.option('-o', '--output', type=click.Choice(['text', 'json', 'yaml']), default='yaml',
+                                  help='Use alternative output format. Default is YAML.')
+
+pretty_json = click.option('--pretty', is_flag=True,
+                           help='Pretty print JSON output. Ignored if output format is not JSON')
 
 
 def print_version(ctx, param, value):
@@ -67,35 +73,18 @@ def cli(ctx, config_file, verbose):
 @click.option('-c', '--config-file', help='Use alternative config file', default=DEFAULT_CONFIG_FILE, metavar='PATH')
 @click.pass_obj
 def configure(obj, config_file):
-    '''Configure ZMON URL and credentials'''
+    """Configure ZMON URL and credentials"""
     set_config_file(config_file, obj.config.get('url'))
 
 
 @cli.command()
 @click.pass_obj
-def status(obj):
+@output_option
+@pretty_json
+def status(obj, output, pretty):
     """Check ZMON system status"""
     client = get_client(obj.config)
-    status = {}
-    with Action('Retrieving status ...'):
+
+    with Output('Retrieving status ...', printer=render_status, output=output, pretty_json=pretty) as act:
         status = client.status()
-
-    click.secho('Alerts active: {}'.format(status.get('alerts_active')))
-
-    info('Workers:')
-    rows = []
-    for worker in status.get('workers', []):
-        rows.append(worker)
-
-    rows.sort(key=lambda x: x.get('name'))
-
-    print_table(['name', 'check_invocations', 'last_execution_time'], rows)
-
-    info('Queues:')
-    rows = []
-    for queue in status.get('queues', []):
-        rows.append(queue)
-
-    rows.sort(key=lambda x: x.get('name'))
-
-    print_table(['name', 'size'], rows)
+        act.echo(status)

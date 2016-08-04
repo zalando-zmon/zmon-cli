@@ -1,6 +1,8 @@
 import json
+import time
 
 import yaml
+import calendar
 
 from clickclick import print_table, OutputFormat, action, secho, error, ok, info
 
@@ -13,6 +15,8 @@ FIELD_ORDER = ['id', 'check_definition_id', 'type', 'name', 'team', 'owning_team
                'condition',
                'command', 'interval', 'entities', 'entities_exclude', 'status', 'last_modified_by']
 FIELD_SORT_INDEX = {k: chr(i) for i, k in enumerate(FIELD_ORDER)}
+
+LAST_MODIFIED_FMT = '%Y-%m-%d %H:%M:%S.%f'
 
 
 class literal_unicode(str):
@@ -107,7 +111,11 @@ def render_entities(entities, output):
 
         for k in s:
             if k not in ('id', 'type'):
-                key_values.append('{}={}'.format(k, e[k]))
+                if k == 'last_modified':
+                    row['last_modified_time'] = (
+                        calendar.timegm(time.strptime(row.pop('last_modified'), LAST_MODIFIED_FMT)))
+                else:
+                    key_values.append('{}={}'.format(k, e[k]))
 
         row['data'] = ' '.join(key_values)
         rows.append(row)
@@ -115,7 +123,8 @@ def render_entities(entities, output):
     rows.sort(key=lambda r: (r['id'], r['type']))
 
     with OutputFormat(output):
-        print_table('id type data'.split(), rows)
+        print_table('id type last_modified_time data'.split(),
+                    rows, titles={'last_modified_time': 'Modified'})
 
 
 def render_status(status, output=None):

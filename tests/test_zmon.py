@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 import zmon_cli.client as client
 from zmon_cli.client import Zmon

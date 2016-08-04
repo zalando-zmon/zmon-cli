@@ -11,3 +11,4 @@ junit.xml
 .cache/
 htmlcov/
 *.swp
+test.yaml

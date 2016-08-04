@@ -178,9 +178,9 @@ class Zmon:
     @logged
     def add_entity(self, entity):
         """
-        Create or update entity on ZMon.
+        Create or update entity on ZMON.
 
-        ZMon PUT entity API doesn't return JSON response.
+        ZMON PUT entity API doesn't return JSON response.
 
         :return: Response object.
         """
@@ -201,9 +201,9 @@ class Zmon:
     @logged
     def delete_entity(self, entity_id) -> bool:
         """
-        Delete entity from ZMon.
+        Delete entity from ZMON.
 
-        ZMon DELETE entity API doesn't return JSON response.
+        ZMON DELETE entity API doesn't return JSON response.
 
         :return: True if succeeded, False otherwise.
         :rtype: bool

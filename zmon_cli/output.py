@@ -106,16 +106,16 @@ def render_entities(entities, output):
         key_values = []
 
         for k in s:
-            if k not in ('id', 'type', 'team'):
+            if k not in ('id', 'type'):
                 key_values.append('{}={}'.format(k, e[k]))
 
         row['data'] = ' '.join(key_values)
         rows.append(row)
 
-    rows.sort(key=lambda r: (r['id'], r['type'], r['team']))
+    rows.sort(key=lambda r: (r['id'], r['type']))
 
     with OutputFormat(output):
-        print_table('id type team data'.split(), rows)
+        print_table('id type data'.split(), rows)
 
 
 def render_status(status, output=None):

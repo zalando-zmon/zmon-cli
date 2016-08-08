@@ -1,8 +1,9 @@
 import json
 
-import pytest
-
+from datetime import datetime
 from unittest.mock import MagicMock
+
+import pytest
 
 import zmon_cli.client as client
 from zmon_cli.client import Zmon
@@ -10,6 +11,9 @@ from zmon_cli.client import Zmon
 
 URL = 'https://some-zmon'
 TOKEN = 123
+
+
+DATE = datetime.now()
 
 
 @pytest.mark.parametrize('e,expected', [
@@ -32,13 +36,13 @@ def test_get_entity_id(monkeypatch, fx_ids):
 
 @pytest.mark.parametrize('e1,e2,result', [
     (
-        {'id': '1', 'nested': {'k': 'v', 'k2': 'v'}},
-        {'id': '1', 'nested': {'k2': 'v', 'k': 'v'}},
+        {'id': '1', 'nested': {'k': 'v', 'k2': 'v'}, 'date': DATE},
+        {'id': '1', 'nested': {'k2': 'v', 'k': 'v'}, 'date': DATE, 'last_modified': 1234},
         True
     ),
     (
-        {'id': '1', 'nested': {'k': 'v', 22: 22}},
-        {'id': '1', 'nested': {'22': 22, 'k': 'v'}},
+        {'id': '1', 'nested': {'k': 'v', 22: 22}, 'last_modified': 1234},
+        {'id': '1', 'nested': {'22': 22, 'k': 'v'}, 'last_modified': 1234567},
         True
     ),
     (
@@ -46,6 +50,11 @@ def test_get_entity_id(monkeypatch, fx_ids):
         {'id': '1', 'nested': {'22': 22, 'k': 'v', 'k3': {'list': [1, 2]}}},
         False
     ),
+    (
+        {},
+        str,  # JSON exception!
+        False
+    )
 ])
 def test_zmon_compare_entities(monkeypatch, e1, e2, result):
     assert client.compare_entities(e1, e2) == result

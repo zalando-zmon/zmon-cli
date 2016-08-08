@@ -5,6 +5,7 @@ import json
 import functools
 import re
 
+from datetime import datetime
 from urllib.parse import urljoin, urlsplit, urlunsplit, SplitResult
 
 import requests
@@ -41,6 +42,11 @@ parentheses_re = re.compile('[(]+|[)]+')
 invalid_entity_id_re = re.compile('[^a-zA-Z0-9-@_.\[\]\:]+')
 
 
+class JSONDateEncoder(json.JSONEncoder):
+    def default(self, obj):
+        return obj.isoformat() if isinstance(obj, datetime) else super().default(obj)
+
+
 class ZmonError(Exception):
     def __init__(self, message=''):
         super().__init__('ZMON client error: {}'.format(message))
@@ -56,14 +62,26 @@ def logged(f):
         try:
             return f(*args, **kwargs)
         except:
-            logger.error('Zmon client failed in: {}'.format(f.__name__))
+            logger.error('ZMON client failed in: {}'.format(f.__name__))
             raise
 
     return wrapper
 
 
 def compare_entities(e1, e2):
-    return json.loads(json.dumps(e1)) == json.loads(json.dumps(e2))
+    try:
+        e1_copy = e1.copy()
+        e1_copy.pop('last_modified', None)
+
+        e2_copy = e2.copy()
+        e2_copy.pop('last_modified', None)
+
+        return (json.loads(json.dumps(e1_copy, cls=JSONDateEncoder)) ==
+                json.loads(json.dumps(e2_copy, cls=JSONDateEncoder)))
+    except:
+        # We failed during json serialiazation/deserialization, fallback to *not-equal*!
+        logger.exception('Failed in `compare_entities`')
+        return False
 
 
 def get_valid_entity_id(e):

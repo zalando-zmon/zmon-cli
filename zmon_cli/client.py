@@ -1,5 +1,4 @@
 import ast
-import os
 import logging
 import json
 import functools
@@ -96,7 +95,7 @@ class Zmon:
 
         split = urlsplit(url)
         self.base_url = urlunsplit(SplitResult(split.scheme, split.netloc, '', '', ''))
-        self.url = urljoin(self.base_url, os.path.join('api', API_VERSION, ''))
+        self.url = urljoin(self.base_url, self._join_path(['api', API_VERSION, '']))
 
         self._session = requests.Session()
 
@@ -131,6 +130,9 @@ class Zmon:
         except Exception as e:
             raise ZmonError('Invalid check command: {}'.format(e))
 
+    def _join_path(self, parts):
+        return '/'.join(str(p).strip('/') for p in parts)
+
     def endpoint(self, *args, trailing_slash=True, base_url=None):
         parts = list(args)
 
@@ -140,7 +142,7 @@ class Zmon:
 
         url = self.url if not base_url else base_url
 
-        return urljoin(url, os.path.join(*[str(p) for p in parts]))
+        return urljoin(url, self._join_path(parts))
 
     def json(self, resp):
         resp.raise_for_status()

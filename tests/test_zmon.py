@@ -5,6 +5,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from requests.exceptions import HTTPError
+
 import zmon_cli.client as client
 from zmon_cli.client import Zmon
 
@@ -126,9 +128,9 @@ def test_zmon_get_entities(monkeypatch, q, result):
 
     zmon = Zmon(URL, token=TOKEN)
 
-    status = zmon.get_entities(query=q)
+    res = zmon.get_entities(query=q)
 
-    assert status == result
+    assert res == result
 
     params = {'query': json.dumps(q)} if q else None
     get.assert_called_with(zmon.endpoint(client.ENTITIES), params=params)
@@ -143,9 +145,9 @@ def test_zmon_get_entity(monkeypatch):
 
     zmon = Zmon(URL, token=TOKEN)
 
-    status = zmon.get_entity(1)
+    res = zmon.get_entity(1)
 
-    assert status == result
+    assert res == result
 
     get.assert_called_with(zmon.endpoint(client.ENTITIES, 1, trailing_slash=False))
 
@@ -205,9 +207,9 @@ def test_zmon_get_dashboard(monkeypatch):
 
     zmon = Zmon(URL, token=TOKEN)
 
-    status = zmon.get_dashboard(1)
+    res = zmon.get_dashboard(1)
 
-    assert status == result
+    assert res == result
 
     get.assert_called_with(zmon.endpoint(client.DASHBOARD, 1))
 
@@ -229,18 +231,26 @@ def test_zmon_update_dashboard(monkeypatch, d):
     post.assert_called_with(url, json=d)
 
 
-def test_zmon_get_check_defintion(monkeypatch):
+@pytest.mark.parametrize('text,result', [('{"id": 1, "type": "dummy"}', {'id': 1, 'type': 'dummy'}), ('', HTTPError)])
+def test_zmon_get_check_defintion(monkeypatch, text, result):
     get = MagicMock()
-    result = {'id': 1, 'type': 'dummy'}
+
+    get.return_value.text = text
     get.return_value.json.return_value = result
+    if type(result) != dict:
+        get.return_value.raise_for_status.side_effect = result
 
     monkeypatch.setattr('requests.Session.get', get)
 
     zmon = Zmon(URL, token=TOKEN)
 
-    check = zmon.get_check_definition(1)
+    if type(result) == dict:
+        res = zmon.get_check_definition(1)
 
-    assert check == result
+        assert res == result
+    else:
+        with pytest.raises(result):
+            zmon.get_check_definition(1)
 
     get.assert_called_with(zmon.endpoint(client.CHECK_DEF, 1))
 

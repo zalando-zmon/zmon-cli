@@ -2,12 +2,15 @@ import os
 import json
 import yaml
 
+import requests
 import click
 
-from clickclick import AliasedGroup, Action, action, error
+from clickclick import AliasedGroup, Action, action
 
 from zmon_cli.cmds.command import cli, get_client, output_option, yaml_output_option, pretty_json
-from zmon_cli.output import render_entities, Output
+from zmon_cli.output import render_entities, Output, log_http_exception
+
+from zmon_cli.client import ZmonArgumentError
 
 
 ########################################################################################################################
@@ -73,13 +76,17 @@ def push_entity(obj, entity):
     if not isinstance(data, list):
         data = [data]
 
-    with Action('Creating new entities ...', nl=True):
+    with Action('Creating new entities ...', nl=True) as act:
         for e in data:
-            action('\nCreating entity {} ...'.format(e['id']))
+            action('Creating entity {} ...'.format(e['id']))
             try:
                 client.add_entity(e)
+            except ZmonArgumentError as e:
+                act.error(str(e))
+            except requests.HTTPError as e:
+                log_http_exception(e, act)
             except Exception as e:
-                error('Exception while adding entity: {}'.format(str(e)))
+                act.error('Failed: {}'.format(str(e)))
 
 
 @entities.command('delete')
@@ -92,4 +99,4 @@ def delete_entity(obj, entity_id):
     with Action('Deleting entity {} ...'.format(entity_id)) as act:
         deleted = client.delete_entity(entity_id)
         if not deleted:
-            act.error('Delete failed')
+            act.error('Failed')

@@ -49,7 +49,7 @@ def get_config_data(config_file=DEFAULT_CONFIG_FILE):
 
 def set_config_file(config_file, default_url):
     while True:
-        url = click.prompt('Please enter the ZMON base URL (e.g. https://demo.zmon.io/api/v1)', default=default_url)
+        url = click.prompt('Please enter the ZMON base URL (e.g. https://demo.zmon.io)', default=default_url)
 
         with Action('Checking {}..'.format(url)):
             requests.get(url, timeout=5, allow_redirects=False)

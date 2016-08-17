@@ -82,7 +82,6 @@ def create_alert_definition(obj, yaml_file):
             new_alert = client.create_alert_definition(alert)
             ok(client.alert_details_url(new_alert))
         except ZmonArgumentError as e:
-            act.error('Invalid alert definition')
             act.error(str(e))
 
 
@@ -102,7 +101,6 @@ def update_alert_definition(obj, yaml_file):
             client.update_alert_definition(alert)
             ok(client.alert_details_url(alert))
         except ZmonArgumentError as e:
-            act.error('Invalid alert definition')
             act.error(str(e))
 
 

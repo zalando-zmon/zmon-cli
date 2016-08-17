@@ -56,6 +56,18 @@ def dump_yaml(data):
 yaml.add_representer(literal_unicode, literal_unicode_representer)
 
 
+def log_http_exception(e, act=None):
+    err = act.error if act else error
+    try:
+        err('HTTP error: {} - {}'.format(e.response.status_code, e.response.reason))
+        try:
+            err(json.dumps(e.response.json(), indent=4))
+        except:
+            err(e.response.text)
+    except:
+        err('HTTP ERROR: {}'.format(e))
+
+
 ########################################################################################################################
 # RENDERERS
 ########################################################################################################################

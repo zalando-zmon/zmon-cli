@@ -1,12 +1,11 @@
 import requests
 
-from clickclick import error
-
 from zmon_cli.cmds import cli
+from zmon_cli.output import log_http_exception
 
 
 def main():
     try:
         cli()
     except requests.HTTPError as e:
-        error('HTTP ERROR: {}'.format(e))
+        log_http_exception(e)

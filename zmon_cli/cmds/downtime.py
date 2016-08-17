@@ -41,5 +41,4 @@ def create_downtime(obj, entity_ids, duration, comment, output, pretty):
             new_downtime = client.create_downtime(downtime)
             act.echo(new_downtime)
         except ZmonArgumentError as e:
-            act.error('Invalid downtime')
             act.error(str(e))

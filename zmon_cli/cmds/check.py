@@ -76,7 +76,6 @@ def update(obj, yaml_file):
             check = client.update_check_definition(check)
             ok(client.check_definition_url(check))
         except ZmonArgumentError as e:
-            act.error('Invalid check definition')
             act.error(str(e))
 
 

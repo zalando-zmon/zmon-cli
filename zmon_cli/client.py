@@ -205,7 +205,7 @@ class Zmon:
         :return: Response object.
         """
         if 'id' not in entity or 'type' not in entity:
-            raise ZmonArgumentError('Entity ID and Type are required.')
+            raise ZmonArgumentError('Entity "id" and "type" are required.')
 
         if not self.is_valid_entity_id(entity['id']):
             raise ZmonArgumentError('Invalid entity ID.')
@@ -252,8 +252,6 @@ class Zmon:
             logger.debug('Updating dashboard with ID: {} ...'.format(dashboard['id']))
 
             resp = self.session.post(self.endpoint(DASHBOARD, dashboard['id']), json=dashboard)
-
-            return self.json(resp)
         else:
             # new dashboard
             logger.debug('Adding new dashboard ...')
@@ -271,12 +269,17 @@ class Zmon:
     def get_check_definition(self, definition_id):
         resp = self.session.get(self.endpoint(CHECK_DEF, definition_id))
 
+        # TODO: total hack! API returns 200 if check def does not exist!
+        if resp.text == '':
+            resp.status_code = 404
+            resp.reason = 'Not Found'
+
         return self.json(resp)
 
     @logged
     def update_check_definition(self, check_definition):
         if 'owning_team' not in check_definition:
-            raise ZmonArgumentError('Check definition must have owning_team')
+            raise ZmonArgumentError('Check definition must have "owning_team"')
 
         if 'status' not in check_definition:
             check_definition['status'] = 'ACTIVE'
@@ -308,7 +311,7 @@ class Zmon:
     @logged
     def create_alert_definition(self, alert_definition):
         if 'last_modified_by' not in alert_definition:
-            raise ZmonArgumentError('Alert definition must have last_modified_by')
+            raise ZmonArgumentError('Alert definition must have "last_modified_by"')
 
         if 'status' not in alert_definition:
             alert_definition['status'] = 'ACTIVE'
@@ -382,9 +385,9 @@ class Zmon:
     @logged
     def update_grafana_dashboard(self, grafana_dashboard):
         if 'id' not in grafana_dashboard['dashboard']:
-            raise ZmonArgumentError('Grafana dashboard must have id')
+            raise ZmonArgumentError('Grafana dashboard must have "id"')
         elif 'title' not in grafana_dashboard['dashboard']:
-            raise ZmonArgumentError('Grafana dashboard must have title')
+            raise ZmonArgumentError('Grafana dashboard must have "title"')
 
         resp = self.session.post(self.endpoint(GRAFANA), json=grafana_dashboard)
 

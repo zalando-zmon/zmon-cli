@@ -5,7 +5,7 @@ import yaml
 import requests
 import click
 
-from clickclick import AliasedGroup, Action, action
+from clickclick import AliasedGroup, Action, action, ok
 
 from zmon_cli.cmds.command import cli, get_client, output_option, yaml_output_option, pretty_json
 from zmon_cli.output import render_entities, Output, log_http_exception
@@ -81,6 +81,7 @@ def push_entity(obj, entity):
             action('Creating entity {} ...'.format(e['id']))
             try:
                 client.add_entity(e)
+                ok()
             except ZmonArgumentError as e:
                 act.error(str(e))
             except requests.HTTPError as e:

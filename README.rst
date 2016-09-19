@@ -2,8 +2,8 @@
 ZMON CLI
 ========
 
-.. image:: https://travis-ci.org/zalando/zmon-cli.svg?branch=master
-   :target: https://travis-ci.org/zalando/zmon-cli
+.. image:: https://travis-ci.org/zalando-zmon/zmon-cli.svg?branch=master
+   :target: https://travis-ci.org/zalando-zmon/zmon-cli
    :alt: Build Status
 
 .. image:: https://coveralls.io/repos/zalando/zmon-cli/badge.svg

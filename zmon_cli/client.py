@@ -26,6 +26,7 @@ GRAFANA = 'grafana2-dashboards'
 GROUPS = 'groups'
 MEMBER = 'member'
 PHONE = 'phone'
+SEARCH = 'quick-search'
 STATUS = 'status'
 TOKENS = 'onetime-tokens'
 
@@ -575,6 +576,50 @@ class Zmon:
         resp = self.session.get(self.endpoint(ALERT_DATA, alert_id, 'all-entities'))
 
         return self.json(resp)
+
+########################################################################################################################
+# SEARCH
+########################################################################################################################
+
+    @logged
+    def search(self, q, teams=None):
+        """
+        Search ZMON dashboards, checks, alerts and grafana dashboards with optional team filtering.
+
+        :param q: search query.
+        :type q: str
+
+        :param teams: Team ID. Default is None.
+        :type teams: list
+
+        :return: Search result.
+        :rtype: dict
+
+        Example:
+
+        .. code-block:: json
+
+            {
+                "alerts": [{"id": "123", "title": "ZMON alert", "team": "ZMON"}],
+                "checks": [{"id": "123", "title": "ZMON check", "team": "ZMON"}],
+                "dashboards": [{"id": "123", "title": "ZMON dashboard", "team": "ZMON"}],
+                "grafana_dashboards": [{"id": "123", "title": "ZMON grafana", "team": ""}],
+            }
+        """
+        if not q:
+            raise ZmonArgumentError('No search query value!')
+
+        if teams and type(teams) not in (list, tuple):
+            raise ZmonArgumentError('"teams" should be a list!')
+
+        params = {'query': q}
+        if teams:
+            params['teams'] = ','.join(teams)
+
+        resp = self.session.get(self.endpoint(SEARCH), params=params)
+
+        return self.json(resp)
+
 
 ########################################################################################################################
 # ONETIME-TOKENS

@@ -133,3 +133,25 @@ def test_update_check_definition(monkeypatch):
         result = runner.invoke(cli, ['-c', 'test.yaml', 'check', 'update', 'check.yaml'], catch_exceptions=False)
 
         assert '/check-definitions/view/7' in result.output
+
+
+def test_search(monkeypatch):
+    get = MagicMock()
+    get.return_value = {'alerts': [], 'checks': [], 'dashboards': [], 'grafana_dashboards': []}
+
+    monkeypatch.setattr('zmon_cli.client.Zmon.search', get)
+    monkeypatch.setattr('zmon_cli.cmds.command.get_client', get_client)
+
+    runner = CliRunner()
+
+    with runner.isolated_filesystem():
+        with open('test.yaml', 'w') as fd:
+            yaml.dump({'url': 'foo', 'token': '123'}, fd)
+
+        result = runner.invoke(
+            cli, ['-c', 'test.yaml', 'search', 'zmon', '-t', 'team-1', '--team', 'team-2'], catch_exceptions=False)
+
+        assert 'Alerts:' in result.output
+        assert 'Checks:' in result.output
+        assert 'Dashboards:' in result.output
+        assert 'Grafana Dashboards:' in result.output

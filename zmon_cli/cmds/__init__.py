@@ -8,6 +8,7 @@ from zmon_cli.cmds.downtime import downtimes
 from zmon_cli.cmds.entity import entities
 from zmon_cli.cmds.grafana import grafana
 from zmon_cli.cmds.group import groups, members
+from zmon_cli.cmds.search import search
 from zmon_cli.cmds.token import tv_tokens
 
 
@@ -22,5 +23,6 @@ __all__ = (
     grafana,
     groups,
     members,
+    search,
     tv_tokens,
 )

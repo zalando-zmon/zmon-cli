@@ -159,3 +159,17 @@ def render_status(status, output=None):
     rows.sort(key=lambda x: x.get('name'))
 
     print_table(['name', 'size'], rows)
+
+
+def render_search(search, output):
+
+    def _print_table(title, rows):
+        info(title)
+        rows.sort(key=lambda x: x.get('title'))
+        print_table(['id', 'title', 'team', 'link'], rows)
+        secho('')
+
+    _print_table('Checks:', search['checks'])
+    _print_table('Alerts:', search['alerts'])
+    _print_table('Dashboards:', search['dashboards'])
+    _print_table('Grafana Dashboards:', search['grafana_dashboards'])

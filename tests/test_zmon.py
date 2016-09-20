@@ -437,6 +437,41 @@ def test_zmon_alert_data(monkeypatch):
     get.assert_called_with(zmon.endpoint(client.ALERT_DATA, 1, 'all-entities'))
 
 
+def test_zmon_search(monkeypatch):
+    get = MagicMock()
+    result = {'alerts': []}
+    get.return_value.json.return_value = result
+
+    monkeypatch.setattr('requests.Session.get', get)
+
+    zmon = Zmon(URL, token=TOKEN)
+
+    q = 'health check'
+    search = zmon.search(q)
+
+    assert search == result
+
+    get.assert_called_with(zmon.endpoint(client.SEARCH), params={'query': q})
+
+
+def test_zmon_search_team(monkeypatch):
+    get = MagicMock()
+    result = {'alerts': []}
+    get.return_value.json.return_value = result
+
+    monkeypatch.setattr('requests.Session.get', get)
+
+    zmon = Zmon(URL, token=TOKEN)
+
+    q = 'health check'
+    teams = ['team-1', 'team-2']
+    search = zmon.search(q, teams)
+
+    assert search == result
+
+    get.assert_called_with(zmon.endpoint(client.SEARCH), params={'query': q, 'teams': 'team-1,team-2'})
+
+
 def test_zmon_list_tokens(monkeypatch):
     get = MagicMock()
     result = [1, 2, 3]

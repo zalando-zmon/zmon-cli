@@ -255,6 +255,24 @@ def test_zmon_get_check_defintion(monkeypatch, text, result):
     get.assert_called_with(zmon.endpoint(client.CHECK_DEF, 1))
 
 
+@pytest.mark.parametrize('resp,result', [
+    ({'check_definitions': [1, 2]}, [1, 2]),
+    ({'check_definitions': []}, [])])
+def test_zmon_get_check_defintions(monkeypatch, resp, result):
+    get = MagicMock()
+    get.return_value.json.return_value = resp
+
+    monkeypatch.setattr('requests.Session.get', get)
+
+    zmon = Zmon(URL, token=TOKEN)
+
+    res = zmon.get_check_definitions()
+
+    assert res == result
+
+    get.assert_called_with(zmon.endpoint(client.ACTIVE_CHECK_DEF))
+
+
 @pytest.mark.parametrize('c,result', [
     (
         {'id': '2', 'owning_team': 'Zmon', 'command': 'return True'},
@@ -319,6 +337,24 @@ def test_zmon_get_alert_defintion(monkeypatch):
     assert check == result
 
     get.assert_called_with(zmon.endpoint(client.ALERT_DEF, 1))
+
+
+@pytest.mark.parametrize('resp,result', [
+    ({'alert_definitions': [1, 2]}, [1, 2]),
+    ({'alert_definitions': []}, [])])
+def test_zmon_get_alert_defintions(monkeypatch, resp, result):
+    get = MagicMock()
+    get.return_value.json.return_value = resp
+
+    monkeypatch.setattr('requests.Session.get', get)
+
+    zmon = Zmon(URL, token=TOKEN)
+
+    res = zmon.get_alert_definitions()
+
+    assert res == result
+
+    get.assert_called_with(zmon.endpoint(client.ACTIVE_ALERT_DEF))
 
 
 @pytest.mark.parametrize('a,result', [

@@ -4,8 +4,8 @@ import click
 
 from clickclick import AliasedGroup, Action, ok
 
-from zmon_cli.cmds.command import cli, get_client, yaml_output_option, pretty_json
-from zmon_cli.output import dump_yaml, Output
+from zmon_cli.cmds.command import cli, get_client, yaml_output_option, output_option, pretty_json
+from zmon_cli.output import dump_yaml, Output, render_alerts
 from zmon_cli.client import ZmonArgumentError
 
 
@@ -66,6 +66,46 @@ def get_alert_definition(obj, alert_id, output, pretty):
         act.echo(alert)
 
 
+@alert_definitions.command('list')
+@click.pass_obj
+@output_option
+@pretty_json
+def list_alert_definitions(obj, output, pretty):
+    """List all active alert definitions"""
+    client = get_client(obj.config)
+
+    with Output('Retrieving active alert definitions ...', nl=True, output=output, pretty_json=pretty,
+                printer=render_alerts) as act:
+        alerts = client.get_alert_definitions()
+
+        for alert in alerts:
+            alert['link'] = client.alert_details_url(alert)
+
+        act.echo(alerts)
+
+
+@alert_definitions.command('filter')
+@click.argument('field')
+@click.argument('value')
+@click.pass_obj
+@output_option
+@pretty_json
+def filter_alert_definitions(obj, field, value, output, pretty):
+    """Filter active alert definitions"""
+    client = get_client(obj.config)
+
+    with Output('Retrieving and filtering alert definitions ...', nl=True, output=output, pretty_json=pretty,
+                printer=render_alerts) as act:
+        alerts = client.get_alert_definitions()
+
+        filtered = [alert for alert in alerts if alert.get(field) == value]
+
+        for alert in filtered:
+            alert['link'] = client.alert_details_url(alert)
+
+        act.echo(filtered)
+
+
 @alert_definitions.command('create')
 @click.argument('yaml_file', type=click.File('rb'))
 @click.pass_obj
@@ -108,7 +148,7 @@ def update_alert_definition(obj, yaml_file):
 @click.argument('alert_id', type=int)
 @click.pass_obj
 def delete_alert_definition(obj, alert_id):
-    """Get a single alert definition"""
+    """Delete a single alert definition"""
     client = get_client(obj.config)
 
     with Action('Deleting alert definition ...'):

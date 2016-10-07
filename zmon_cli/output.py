@@ -161,6 +161,74 @@ def render_status(status, output=None):
     print_table(['name', 'size'], rows)
 
 
+def render_checks(checks, output=None):
+    rows = []
+
+    for check in checks:
+        row = check
+
+        row['last_modified_time'] = calendar.timegm(time.gmtime(row.pop('last_modified') / 1000))
+
+        row['name'] = row['name'][:60]
+        row['owning_team'] = row['owning_team'][:60].replace('\n', '')
+
+        rows.append(row)
+
+    rows.sort(key=lambda c: c['id'])
+
+    # Not really used since all checks are ACTIVE!
+    check_styles = {
+        'ACTIVE': {'fg': 'green'},
+        'DELETED': {'fg': 'red'},
+        'INACTIVE': {'fg': 'yellow'},
+    }
+
+    print_table(['id', 'name', 'owning_team', 'last_modified_time', 'last_modified_by', 'status', 'link'], rows,
+                titles={'last_modified_time': 'Modified', 'last_modified_by': 'Modified by'}, styles=check_styles)
+
+
+def render_alerts(alerts, output=None):
+    rows = []
+
+    for alert in alerts:
+        row = alert
+
+        row['last_modified_time'] = calendar.timegm(time.gmtime(row.pop('last_modified') / 1000))
+
+        row['name'] = row['name'][:60]
+        row['responsible_team'] = row['responsible_team'][:40].replace('\n', '')
+        row['team'] = row['team'][:40].replace('\n', '')
+
+        priorities = {1: 'HIGH', 2: 'MEDIUM', 3: 'LOW'}
+        row['priority'] = priorities.get(row['priority'], 'LOW')
+
+        rows.append(row)
+
+    rows.sort(key=lambda c: c['id'])
+
+    check_styles = {
+        'ACTIVE': {'fg': 'green'},
+        'REJECTED': {'fg': 'red'},
+        'INACTIVE': {'fg': 'yellow'},
+        'HIGH': {'fg': 'red'},
+        'MEDIUM': {'fg': 'yellow', 'bold': True},
+        'LOW': {'fg': 'yellow'},
+    }
+
+    titles = {
+        'last_modified_time': 'Modified',
+        'last_modified_by': 'Modified by',
+        'check_definition_id': 'Check ID',
+    }
+
+    headers = [
+        'id', 'name', 'check_definition_id', 'responsible_team', 'team', 'priority', 'last_modified_time',
+        'last_modified_by', 'status', 'link',
+    ]
+
+    print_table(headers, rows, titles=titles, styles=check_styles)
+
+
 def render_search(search, output):
 
     def _print_table(title, rows):

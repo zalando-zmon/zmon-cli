@@ -16,6 +16,8 @@ API_VERSION = 'v1'
 
 ZMON_USER_AGENT = 'zmon-client/{}'.format(__version__)
 
+ACTIVE_ALERT_DEF = 'checks/all-active-alert-definitions'
+ACTIVE_CHECK_DEF = 'checks/all-active-check-definitions'
 ALERT_DATA = 'status/alert'
 ALERT_DEF = 'alert-definitions'
 CHECK_DEF = 'check-definitions'
@@ -182,6 +184,7 @@ class Zmon:
 
     def json(self, resp):
         resp.raise_for_status()
+
         return resp.json()
 
 ########################################################################################################################
@@ -417,6 +420,12 @@ class Zmon:
         return self.json(resp)
 
     @logged
+    def get_check_definitions(self):
+        resp = self.session.get(self.endpoint(ACTIVE_CHECK_DEF))
+
+        return self.json(resp).get('check_definitions')
+
+    @logged
     def update_check_definition(self, check_definition):
         """
         Update existing check definition.
@@ -476,6 +485,12 @@ class Zmon:
         resp = self.session.get(self.endpoint(ALERT_DEF, alert_id))
 
         return self.json(resp)
+
+    @logged
+    def get_alert_definitions(self):
+        resp = self.session.get(self.endpoint(ACTIVE_ALERT_DEF))
+
+        return self.json(resp).get('alert_definitions')
 
     @logged
     def create_alert_definition(self, alert_definition):

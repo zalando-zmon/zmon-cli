@@ -96,6 +96,66 @@ def test_get_alert_definition(monkeypatch):
         assert 'id: 123\ncheck_definition_id: 9\nname: Test\ncondition: |-\n  >0' in result.output.rstrip()
 
 
+def test_list_alert_definitions(monkeypatch):
+    get = MagicMock()
+    get.return_value = []
+
+    monkeypatch.setattr('zmon_cli.client.Zmon.get_alert_definitions', get)
+    monkeypatch.setattr('zmon_cli.cmds.command.get_client', get_client)
+
+    runner = CliRunner()
+
+    with runner.isolated_filesystem():
+        with open('test.yaml', 'w') as fd:
+            yaml.dump({'url': 'foo', 'token': 123}, fd)
+
+        result = runner.invoke(cli, ['-c', 'test.yaml', 'alert', 'l'], catch_exceptions=False)
+
+        out = result.output.rstrip()
+
+        assert 'Id' in out
+        assert 'Name' in out
+        assert 'Check ID' in out
+        assert 'Link' in out
+
+
+def test_filter_alert_definitions(monkeypatch):
+    get = MagicMock()
+    get.return_value = [
+        {
+            'team': 'ZMON', 'responsible_team': 'ZMON', 'name': 'alert-1', 'id': 1, 'status': 'ACTIVE', 'priority': 1,
+            'last_modified': 1473418659294, 'last_modified_by': 'user-1', 'check_definition_id': 33
+        },
+        {
+            'team': 'FANCY', 'responsible_team': 'ZMON', 'name': 'alert-2', 'id': 2, 'status': 'ACTIVE', 'priority': 2,
+            'last_modified': 1473418659294, 'last_modified_by': 'user-2', 'check_definition_id': 34
+        },
+    ]
+
+    monkeypatch.setattr('zmon_cli.client.Zmon.get_alert_definitions', get)
+    monkeypatch.setattr('zmon_cli.cmds.command.get_client', get_client)
+
+    runner = CliRunner()
+
+    with runner.isolated_filesystem():
+        with open('test.yaml', 'w') as fd:
+            yaml.dump({'url': 'foo', 'token': 123}, fd)
+
+        result = runner.invoke(cli, ['-c', 'test.yaml', 'alert', 'f', 'team', 'ZMON'], catch_exceptions=False)
+
+        out = result.output.rstrip()
+
+        assert 'ZMON' in out
+        assert 'alert-1' in out
+        assert 'ago' in out
+        assert 'Link' in out
+        assert 'HIGH' in out
+
+        assert 'FANCY' not in out
+        assert 'alert-2' not in out
+        assert 'MEDIUM' not in out
+
+
 def test_update_check_definition_invalid(monkeypatch):
     monkeypatch.setattr('zmon_cli.config.DEFAULT_CONFIG_FILE', 'test.yaml')
 
@@ -133,6 +193,91 @@ def test_update_check_definition(monkeypatch):
         result = runner.invoke(cli, ['-c', 'test.yaml', 'check', 'update', 'check.yaml'], catch_exceptions=False)
 
         assert '/check-definitions/view/7' in result.output
+
+
+def test_get_check_definition(monkeypatch):
+    get = MagicMock()
+    get.return_value = {
+        'id': 123, 'name': 'Test', 'command': 'http().json()'
+    }
+
+    monkeypatch.setattr('zmon_cli.client.Zmon.get_check_definition', get)
+    monkeypatch.setattr('zmon_cli.cmds.command.get_client', get_client)
+
+    runner = CliRunner()
+
+    with runner.isolated_filesystem():
+        with open('test.yaml', 'w') as fd:
+            yaml.dump({'url': 'foo', 'token': 123}, fd)
+
+        result = runner.invoke(cli, ['-c', 'test.yaml', 'check', 'get', '123'], catch_exceptions=False)
+
+        assert 'id: 123\nname: Test\ncommand: |-\n  http().json()' in result.output.rstrip()
+
+        result = runner.invoke(cli, ['-c', 'test.yaml', 'check', 'get', '123', '-o', 'json'], catch_exceptions=False)
+
+        out = result.output.rstrip()
+        assert '"name": "Test"' in out
+        assert '"id": 123' in out
+        assert '"command": "http().json()"' in out
+
+
+def test_list_check_definitions(monkeypatch):
+    get = MagicMock()
+    get.return_value = []
+
+    monkeypatch.setattr('zmon_cli.client.Zmon.get_check_definitions', get)
+    monkeypatch.setattr('zmon_cli.cmds.command.get_client', get_client)
+
+    runner = CliRunner()
+
+    with runner.isolated_filesystem():
+        with open('test.yaml', 'w') as fd:
+            yaml.dump({'url': 'foo', 'token': 123}, fd)
+
+        result = runner.invoke(cli, ['-c', 'test.yaml', 'check', 'l'], catch_exceptions=False)
+
+        out = result.output.rstrip()
+
+        assert 'Id' in out
+        assert 'Name' in out
+        assert 'Owning Team' in out
+        assert 'Link' in out
+
+
+def test_filter_check_definitions(monkeypatch):
+    get = MagicMock()
+    get.return_value = [
+        {
+            'owning_team': 'ZMON', 'name': 'check-1', 'id': 1, 'status': 'ACTIVE', 'last_modified': 1473418659294,
+            'last_modified_by': 'user-1'
+        },
+        {
+            'owning_team': 'FANCY', 'name': 'check-2', 'id': 2, 'status': 'ACTIVE', 'last_modified': 1473418659294,
+            'last_modified_by': 'user-2'
+        },
+    ]
+
+    monkeypatch.setattr('zmon_cli.client.Zmon.get_check_definitions', get)
+    monkeypatch.setattr('zmon_cli.cmds.command.get_client', get_client)
+
+    runner = CliRunner()
+
+    with runner.isolated_filesystem():
+        with open('test.yaml', 'w') as fd:
+            yaml.dump({'url': 'foo', 'token': 123}, fd)
+
+        result = runner.invoke(cli, ['-c', 'test.yaml', 'check', 'f', 'owning_team', 'ZMON'], catch_exceptions=False)
+
+        out = result.output.rstrip()
+
+        assert 'ZMON' in out
+        assert 'check-1' in out
+        assert 'ago' in out
+        assert 'Link' in out
+
+        assert 'FANCY' not in out
+        assert 'check-2' not in out
 
 
 def test_search(monkeypatch):

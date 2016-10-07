@@ -4,8 +4,8 @@ import click
 
 from clickclick import AliasedGroup, Action, ok
 
-from zmon_cli.cmds.command import cli, get_client, yaml_output_option, pretty_json
-from zmon_cli.output import dump_yaml, Output
+from zmon_cli.cmds.command import cli, get_client, yaml_output_option, pretty_json, output_option
+from zmon_cli.output import dump_yaml, Output, render_checks
 from zmon_cli.client import ZmonArgumentError
 
 
@@ -58,6 +58,46 @@ def get_check_definition(obj, check_id, output, pretty):
                 del check[k]
 
         act.echo(check)
+
+
+@check_definitions.command('list')
+@click.pass_obj
+@output_option
+@pretty_json
+def list_check_definitions(obj, output, pretty):
+    """List all active check definitions"""
+    client = get_client(obj.config)
+
+    with Output('Retrieving active check definitions ...', nl=True, output=output, pretty_json=pretty,
+                printer=render_checks) as act:
+        checks = client.get_check_definitions()
+
+        for check in checks:
+            check['link'] = client.check_definition_url(check)
+
+        act.echo(checks)
+
+
+@check_definitions.command('filter')
+@click.argument('field')
+@click.argument('value')
+@click.pass_obj
+@output_option
+@pretty_json
+def filter_check_definitions(obj, field, value, output, pretty):
+    """Filter active check definitions"""
+    client = get_client(obj.config)
+
+    with Output('Retrieving and filtering check definitions ...', nl=True, output=output, pretty_json=pretty,
+                printer=render_checks) as act:
+        checks = client.get_check_definitions()
+
+        filtered = [check for check in checks if check.get(field) == value]
+
+        for check in filtered:
+            check['link'] = client.check_definition_url(check)
+
+        act.echo(filtered)
 
 
 @check_definitions.command('update')

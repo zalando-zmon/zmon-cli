@@ -25,10 +25,11 @@ def read_version(package):
         exec(fd.read(), data)
     return data['__version__']
 
+
 NAME = 'zmon-cli'
 MAIN_PACKAGE = 'zmon_cli'
 VERSION = read_version(MAIN_PACKAGE)
-DESCRIPTION = 'Command line interface for Zalando\'s monitoring tool ZMON'
+DESCRIPTION = "Command line interface for Zalando's monitoring tool ZMON"
 LICENSE = 'Apache License 2.0'
 URL = 'https://github.com/zalando/zmon'
 AUTHOR = 'Henning Jacobs'
@@ -44,6 +45,7 @@ CLASSIFIERS = [
     'Development Status :: 4 - Beta',
     'Programming Language :: Python',
     'Programming Language :: Python :: 3.4',
+    'Programming Language :: Python :: 3.5',
     'Programming Language :: Python :: Implementation :: CPython',
     'Operating System :: POSIX :: Linux',
     'Operating System :: MacOS :: MacOS X',

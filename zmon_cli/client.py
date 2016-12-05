@@ -191,7 +191,7 @@ class Zmon:
 # DEEPLINKS
 ########################################################################################################################
 
-    def check_definition_url(self, check_definition):
+    def check_definition_url(self, check_definition: dict) -> str:
         """
         Return direct deeplink to check definition view on ZMON UI.
 
@@ -203,7 +203,7 @@ class Zmon:
         """
         return self.endpoint(CHECK_DEF_VIEW_URL, check_definition['id'], base_url=self.base_url)
 
-    def alert_details_url(self, alert):
+    def alert_details_url(self, alert: dict) -> str:
         """
         Return direct deeplink to alert details view on ZMON UI.
 
@@ -215,7 +215,7 @@ class Zmon:
         """
         return self.endpoint(ALERT_DETAILS_VIEW_URL, alert['id'], base_url=self.base_url)
 
-    def dashboard_url(self, dashboard_id):
+    def dashboard_url(self, dashboard_id: int) -> str:
         """
         Return direct deeplink to ZMON dashboard.
 
@@ -227,7 +227,7 @@ class Zmon:
         """
         return self.endpoint(DASHBOARD_VIEW_URL, dashboard_id, base_url=self.base_url)
 
-    def token_login_url(self, token):
+    def token_login_url(self, token: str) -> str:
         """
         Return direct deeplink to ZMON one-time login.
 
@@ -239,7 +239,7 @@ class Zmon:
         """
         return self.endpoint(TOKEN_LOGIN_URL, token, base_url=self.base_url)
 
-    def grafana_dashboard_url(self, dashboard):
+    def grafana_dashboard_url(self, dashboard: dict) -> str:
         """
         Return direct deeplink to Grafana dashboard.
 
@@ -252,7 +252,7 @@ class Zmon:
         return self.endpoint(GRAFANA_DASHBOARD_URL, dashboard['id'], base_url=self.base_url)
 
     @logged
-    def status(self):
+    def status(self) -> dict:
         """
         Return ZMON status from status API.
 
@@ -268,7 +268,7 @@ class Zmon:
 ########################################################################################################################
 
     @logged
-    def get_entities(self, query=None):
+    def get_entities(self, query=None) -> list:
         """
         Get ZMON entities, with optional filtering.
 
@@ -289,7 +289,7 @@ class Zmon:
         return self.json(resp)
 
     @logged
-    def get_entity(self, entity_id):
+    def get_entity(self, entity_id: str) -> str:
         """
         Retrieve single entity.
 
@@ -305,13 +305,16 @@ class Zmon:
         return self.json(resp)
 
     @logged
-    def add_entity(self, entity):
+    def add_entity(self, entity: dict) -> requests.Response:
         """
         Create or update an entity on ZMON.
 
         .. note::
 
             ZMON PUT entity API doesn't return JSON response.
+
+        :param entity: Entity dict.
+        :type entity: dict
 
         :return: Response object.
         :rtype: :class:`requests.Response`
@@ -331,13 +334,16 @@ class Zmon:
         return resp
 
     @logged
-    def delete_entity(self, entity_id):
+    def delete_entity(self, entity_id: str) -> bool:
         """
         Delete entity from ZMON.
 
         .. note::
 
             ZMON DELETE entity API doesn't return JSON response.
+
+        :param entity_id: Entity ID.
+        :type entity_id: str
 
         :return: True if succeeded, False otherwise.
         :rtype: bool
@@ -355,7 +361,7 @@ class Zmon:
 ########################################################################################################################
 
     @logged
-    def get_dashboard(self, dashboard_id):
+    def get_dashboard(self, dashboard_id: str) -> dict:
         """
         Retrieve a ZMON dashboard.
 
@@ -370,7 +376,7 @@ class Zmon:
         return self.json(resp)
 
     @logged
-    def update_dashboard(self, dashboard):
+    def update_dashboard(self, dashboard: dict) -> dict:
         """
         Create or update dashboard.
 
@@ -400,7 +406,7 @@ class Zmon:
 ########################################################################################################################
 
     @logged
-    def get_check_definition(self, definition_id):
+    def get_check_definition(self, definition_id: int) -> dict:
         """
         Retrieve check defintion.
 
@@ -420,13 +426,19 @@ class Zmon:
         return self.json(resp)
 
     @logged
-    def get_check_definitions(self):
+    def get_check_definitions(self) -> list:
+        """
+        Return list of all ``active`` check definitions.
+
+        :return: List of check-defs.
+        :rtype: list
+        """
         resp = self.session.get(self.endpoint(ACTIVE_CHECK_DEF))
 
         return self.json(resp).get('check_definitions')
 
     @logged
-    def update_check_definition(self, check_definition):
+    def update_check_definition(self, check_definition: dict) -> dict:
         """
         Update existing check definition.
 
@@ -451,7 +463,7 @@ class Zmon:
         return self.json(resp)
 
     @logged
-    def delete_check_definition(self, check_definition_id):
+    def delete_check_definition(self, check_definition_id: int) -> requests.Response:
         """
         Delete existing check definition.
 
@@ -472,7 +484,7 @@ class Zmon:
 ########################################################################################################################
 
     @logged
-    def get_alert_definition(self, alert_id):
+    def get_alert_definition(self, alert_id: int) -> dict:
         """
         Retrieve alert definition.
 
@@ -487,13 +499,19 @@ class Zmon:
         return self.json(resp)
 
     @logged
-    def get_alert_definitions(self):
+    def get_alert_definitions(self) -> list:
+        """
+        Return list of all ``active`` alert definitions.
+
+        :return: List of alert-defs.
+        :rtype: list
+        """
         resp = self.session.get(self.endpoint(ACTIVE_ALERT_DEF))
 
         return self.json(resp).get('alert_definitions')
 
     @logged
-    def create_alert_definition(self, alert_definition):
+    def create_alert_definition(self, alert_definition: dict) -> dict:
         """
         Create new alert definition.
 
@@ -520,7 +538,7 @@ class Zmon:
         return self.json(resp)
 
     @logged
-    def update_alert_definition(self, alert_definition):
+    def update_alert_definition(self, alert_definition: dict) -> dict:
         """
         Update existing alert definition.
 
@@ -551,7 +569,7 @@ class Zmon:
         return self.json(resp)
 
     @logged
-    def delete_alert_definition(self, alert_definition_id):
+    def delete_alert_definition(self, alert_definition_id: int) -> dict:
         """
         Delete existing alert definition.
 
@@ -566,7 +584,7 @@ class Zmon:
         return self.json(resp)
 
     @logged
-    def get_alert_data(self, alert_id):
+    def get_alert_data(self, alert_id: int) -> dict:
         """
         Retrieve alert data.
 
@@ -597,14 +615,14 @@ class Zmon:
 ########################################################################################################################
 
     @logged
-    def search(self, q, teams=None):
+    def search(self, q, teams: list=None) -> dict:
         """
         Search ZMON dashboards, checks, alerts and grafana dashboards with optional team filtering.
 
         :param q: search query.
         :type q: str
 
-        :param teams: Team ID. Default is None.
+        :param teams: List of team IDs. Default is None.
         :type teams: list
 
         :return: Search result.
@@ -641,7 +659,7 @@ class Zmon:
 ########################################################################################################################
 
     @logged
-    def list_onetime_tokens(self):
+    def list_onetime_tokens(self) -> list:
         """
         List exisitng one-time tokens.
 
@@ -663,7 +681,7 @@ class Zmon:
         return self.json(resp)
 
     @logged
-    def get_onetime_token(self):
+    def get_onetime_token(self) -> str:
         """
         Retrieve new one-time token.
 
@@ -683,7 +701,7 @@ class Zmon:
 ########################################################################################################################
 
     @logged
-    def get_grafana_dashboard(self, grafana_dashboard_id):
+    def get_grafana_dashboard(self, grafana_dashboard_id: str) -> dict:
         """
         Retrieve Grafana dashboard.
 
@@ -698,7 +716,7 @@ class Zmon:
         return self.json(resp)
 
     @logged
-    def update_grafana_dashboard(self, grafana_dashboard):
+    def update_grafana_dashboard(self, grafana_dashboard: dict) -> dict:
         """
         Update existing Grafana dashboard.
 
@@ -724,7 +742,7 @@ class Zmon:
 ########################################################################################################################
 
     @logged
-    def create_downtime(self, downtime):
+    def create_downtime(self, downtime: dict) -> dict:
         """
         Create a downtime for specific entities.
 

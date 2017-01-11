@@ -1,7 +1,5 @@
 clickclick>=1.1
 easydict
-keyring
-keyrings.alt
 PyYAML>=3.11
 requests>=2.2.1
-stups-zign
+stups-zign>=1.1.26

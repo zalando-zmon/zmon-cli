@@ -6,8 +6,8 @@ ZMON CLI
    :target: https://travis-ci.org/zalando-zmon/zmon-cli
    :alt: Build Status
 
-.. image:: https://coveralls.io/repos/zalando/zmon-cli/badge.svg
-   :target: https://coveralls.io/r/zalando/zmon-cli
+.. image:: https://img.shields.io/codecov/c/github/zalando-zmon/zmon-cli.svg?maxAge=2592000
+   :target: https://codecov.io/gh/zalando-zmon/zmon-cli
    :alt: Code Coverage
 
 .. image:: https://img.shields.io/pypi/dw/zmon-cli.svg
@@ -24,7 +24,7 @@ ZMON CLI
 
 Command line client for the Zalando Monitoring solution (ZMON).
 
-Requires Python 3.4.
+Requires Python 3.4+
 
 Installation
 ============

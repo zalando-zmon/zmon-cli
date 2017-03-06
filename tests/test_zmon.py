@@ -15,7 +15,7 @@ URL = 'https://some-zmon'
 TOKEN = 123
 
 
-DATE = datetime.now()
+DATE = datetime(2017, 3, 6, 16, 40, 0)
 
 
 @pytest.mark.parametrize('e,expected', [
@@ -153,7 +153,10 @@ def test_zmon_get_entity(monkeypatch):
 
 
 @pytest.mark.parametrize('e,result', [
-    ({'id': '2', 'type': 'dummy'}, {'id': '2', 'type': 'dummy'}),
+    (
+        {'id': '2', 'type': 'dummy', 'date-field': DATE},
+        {'id': '2', 'type': 'dummy', 'date-field': '2017-03-06T16:40:00'}
+    ),
     ({'id': '2'}, client.ZmonArgumentError),
     ({'type': 'dummy'}, client.ZmonArgumentError),
     ({'id': 'zmon/1', 'type': 'dummy'}, client.ZmonArgumentError),
@@ -179,7 +182,7 @@ def test_zmon_add_entity(monkeypatch, e, result):
         r = zmon.add_entity(e)
         assert r.ok is True
 
-        put.assert_called_with(zmon.endpoint(client.ENTITIES, trailing_slash=False), json=e)
+        put.assert_called_with(zmon.endpoint(client.ENTITIES, trailing_slash=False), data=json.dumps(result))
 
 
 @pytest.mark.parametrize('result', ['1', '0'])

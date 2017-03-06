@@ -327,7 +327,8 @@ class Zmon:
 
         logger.debug('Adding new entity: {} ...'.format(entity['id']))
 
-        resp = self.session.put(self.endpoint(ENTITIES, trailing_slash=False), json=entity)
+        data = json.dumps(entity, cls=JSONDateEncoder)
+        resp = self.session.put(self.endpoint(ENTITIES, trailing_slash=False), data=data)
 
         resp.raise_for_status()
 

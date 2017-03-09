@@ -82,7 +82,7 @@ def test_zmon_view_urls(monkeypatch):
     assert '{}/tv/1234/'.format(URL) == zmon.token_login_url(token)
 
     # Grafana
-    dashboard = {'id': 'grafana-dash'}
+    dashboard = {'dashboard': {'id': 'grafana-dash'}, 'meta': {'type': 'db'}}
     assert '{}/grafana/dashboard/db/grafana-dash/'.format(URL) == zmon.grafana_dashboard_url(dashboard)
 
 

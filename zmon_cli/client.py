@@ -249,7 +249,7 @@ class Zmon:
         :return: Deeplink to Grafana dashboard.
         :rtype: str
         """
-        return self.endpoint(GRAFANA_DASHBOARD_URL, dashboard['id'], base_url=self.base_url)
+        return self.endpoint(GRAFANA_DASHBOARD_URL, dashboard['dashboard']['id'], base_url=self.base_url)
 
     @logged
     def status(self) -> dict:

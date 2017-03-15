@@ -155,6 +155,21 @@ def test_filter_alert_definitions(monkeypatch):
         assert 'alert-2' not in out
         assert 'MEDIUM' not in out
 
+        result = runner.invoke(
+            cli, ['-c', 'test.yaml', 'alert', 'f', 'check_definition_id', '34'], catch_exceptions=False)
+
+        out = result.output.rstrip()
+
+        assert 'ZMON' in out
+        assert 'alert-1' not in out
+
+        assert 'ago' in out
+        assert 'Link' in out
+
+        assert 'FANCY' in out
+        assert 'alert-2' in out
+        assert 'MEDIUM' in out
+
 
 def test_update_check_definition_invalid(monkeypatch):
     monkeypatch.setattr('zmon_cli.config.DEFAULT_CONFIG_FILE', 'test.yaml')

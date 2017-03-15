@@ -98,6 +98,9 @@ def filter_alert_definitions(obj, field, value, output, pretty):
                 printer=render_alerts) as act:
         alerts = client.get_alert_definitions()
 
+        if field == 'check_definition_id':
+            value = int(value)
+
         filtered = [alert for alert in alerts if alert.get(field) == value]
 
         for alert in filtered:

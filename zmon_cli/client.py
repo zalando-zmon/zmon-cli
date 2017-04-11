@@ -439,7 +439,7 @@ class Zmon:
         return self.json(resp).get('check_definitions')
 
     @logged
-    def update_check_definition(self, check_definition: dict) -> dict:
+    def update_check_definition(self, check_definition: dict, skip_validation: bool=False) -> dict:
         """
         Update existing check definition.
 
@@ -447,6 +447,9 @@ class Zmon:
 
         :param check_definition: ZMON check definition dict.
         :type check_definition: dict
+
+        :param skip_validation: Skip validation of the check command syntax.
+        :type skip_validation: bool
 
         :return: Check definition dict.
         :rtype: dict
@@ -457,7 +460,8 @@ class Zmon:
         if 'status' not in check_definition:
             check_definition['status'] = 'ACTIVE'
 
-        self.validate_check_command(check_definition['command'])
+        if not skip_validation:
+            self.validate_check_command(check_definition['command'])
 
         resp = self.session.post(self.endpoint(CHECK_DEF), json=check_definition)
 

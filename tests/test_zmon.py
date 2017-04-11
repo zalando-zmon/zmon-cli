@@ -276,19 +276,44 @@ def test_zmon_get_check_defintions(monkeypatch, resp, result):
     get.assert_called_with(zmon.endpoint(client.ACTIVE_CHECK_DEF))
 
 
-@pytest.mark.parametrize('c,result', [
+@pytest.mark.parametrize('c,skip,result', [
     (
         {'id': '2', 'owning_team': 'Zmon', 'command': 'return True'},
+        False,
         {'id': '2', 'owning_team': 'Zmon', 'command': 'return True', 'status': 'ACTIVE'}
     ),
     (
         {'id': '2', 'owning_team': 'Zmon', 'command': 'return True', 'status': 'INACTIVE'},
+        False,
         {'id': '2', 'owning_team': 'Zmon', 'command': 'return True', 'status': 'INACTIVE'}
     ),
-    ({'id': '2'}, client.ZmonArgumentError),
-    ({'id': '2', 'owning_team': 'Zmon', 'command': 'def x('}, client.ZmonError),
+    ({'id': '2'}, False, client.ZmonArgumentError),
+    ({'id': '2', 'owning_team': 'Zmon', 'command': 'def x('}, False, client.ZmonError),
+    (
+        {
+            'id': '2', 'owning_team': 'Zmon',
+            'command': (
+                '''
+                try:
+                    return True
+                except Exception, e:
+                    return e
+                ''')
+        },
+        True,
+        {
+            'id': '2', 'owning_team': 'Zmon',
+            'command': (
+                '''
+                try:
+                    return True
+                except Exception, e:
+                    return e
+                ''')
+        }
+    ),
 ])
-def test_zmon_update_check_defintion(monkeypatch, c, result):
+def test_zmon_update_check_defintion(monkeypatch, c, skip, result):
     fail = True
     if type(result) is dict:
         fail = False
@@ -304,7 +329,7 @@ def test_zmon_update_check_defintion(monkeypatch, c, result):
         with pytest.raises(result):
             zmon.update_check_definition(c)
     else:
-        check = zmon.update_check_definition(c)
+        check = zmon.update_check_definition(c, skip_validation=skip)
         assert check == result
 
         post.assert_called_with(zmon.endpoint(client.CHECK_DEF), json=c)

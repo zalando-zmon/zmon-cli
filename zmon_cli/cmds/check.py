@@ -102,8 +102,9 @@ def filter_check_definitions(obj, field, value, output, pretty):
 
 @check_definitions.command('update')
 @click.argument('yaml_file', type=click.File('rb'))
+@click.option('--skip-validation', is_flag=True, help='Skip check command syntax validation.')
 @click.pass_obj
-def update(obj, yaml_file):
+def update(obj, yaml_file, skip_validation):
     """Update a single check definition"""
     check = yaml.safe_load(yaml_file)
 
@@ -113,7 +114,7 @@ def update(obj, yaml_file):
 
     with Action('Updating check definition ...', nl=True) as act:
         try:
-            check = client.update_check_definition(check)
+            check = client.update_check_definition(check, skip_validation=skip_validation)
             ok(client.check_definition_url(check))
         except ZmonArgumentError as e:
             act.error(str(e))

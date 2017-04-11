@@ -1,3 +1,5 @@
+import json
+
 import yaml
 
 import click
@@ -141,6 +143,12 @@ def update_alert_definition(obj, yaml_file):
 
     with Action('Updating alert definition ...', nl=True) as act:
         try:
+            # Workaround API inconsistency!
+            if alert.get('parameters'):
+                for k, v in alert['parameters'].items():
+                    if type(v) is str:
+                        alert['parameters'][k] = json.loads(v)
+
             client.update_alert_definition(alert)
             ok(client.alert_details_url(alert))
         except ZmonArgumentError as e:

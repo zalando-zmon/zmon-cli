@@ -132,3 +132,9 @@ def delete_check_definition(obj, check_id):
 
         if not resp.ok:
             act.error(resp.text)
+
+
+@check_definitions.command('help')
+@click.pass_context
+def help(ctx):
+    print(ctx.parent.get_help())

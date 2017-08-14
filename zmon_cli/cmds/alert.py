@@ -164,3 +164,9 @@ def delete_alert_definition(obj, alert_id):
 
     with Action('Deleting alert definition ...'):
         client.delete_alert_definition(alert_id)
+
+
+@alert_definitions.command('help')
+@click.pass_context
+def help(ctx):
+        print(ctx.parent.get_help())

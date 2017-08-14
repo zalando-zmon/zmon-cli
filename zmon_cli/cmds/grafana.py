@@ -47,3 +47,9 @@ def grafana_update(obj, yaml_file):
             ok(client.grafana_dashboard_url(dashboard))
         except ZmonArgumentError as e:
             act.error(e)
+
+
+@grafana.command('help')
+@click.pass_context
+def help(ctx):
+        print(ctx.parent.get_help())

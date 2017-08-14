@@ -70,3 +70,9 @@ def dashboard_update(obj, yaml_file):
     with Action(msg, nl=True):
         dash_id = client.update_dashboard(dashboard)
         ok(client.dashboard_url(dash_id))
+
+
+@dashboard.command('help')
+@click.pass_context
+def help(ctx):
+    print(ctx.parent.get_help())

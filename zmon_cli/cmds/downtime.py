@@ -42,3 +42,9 @@ def create_downtime(obj, entity_ids, duration, comment, output, pretty):
             act.echo(new_downtime)
         except ZmonArgumentError as e:
             act.error(str(e))
+
+
+@downtimes.command('help')
+@click.pass_context
+def help(ctx):
+    print(ctx.parent.get_help())

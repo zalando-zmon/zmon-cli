@@ -117,3 +117,9 @@ def set_name(obj, member_email, member_name):
 
     with Action('Changing user name ...'):
         client.set_name(member_email, member_name)
+
+
+@members.command('help')
+@click.pass_context
+def help(ctx):
+    print(ctx.parent.get_help())

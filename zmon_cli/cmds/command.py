@@ -88,3 +88,12 @@ def status(obj, output, pretty):
     with Output('Retrieving status ...', printer=render_status, output=output, pretty_json=pretty) as act:
         status = client.status()
         act.echo(status)
+
+
+@click.command()
+@click.pass_context
+def help(ctx):
+    print(ctx.get_help())
+
+
+cli.add_command(help)

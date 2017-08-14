@@ -101,3 +101,9 @@ def delete_entity(obj, entity_id):
         deleted = client.delete_entity(entity_id)
         if not deleted:
             act.error('Failed')
+
+
+@entities.command('help')
+@click.pass_context
+def help(ctx):
+    print(ctx.parent.get_help())

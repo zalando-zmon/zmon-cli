@@ -39,6 +39,8 @@ def get_client(config):
 
     if 'user' in config and 'password' in config:
         return Zmon(config['url'], username=config['user'], password=config['password'], verify=verify)
+    elif os.environ.get('ZMON_TOKEN'):
+        return Zmon(config['url'], token=os.environ.get('ZMON_TOKEN'), verify=verify)
     elif 'token' in config:
         return Zmon(config['url'], token=config['token'], verify=verify)
 

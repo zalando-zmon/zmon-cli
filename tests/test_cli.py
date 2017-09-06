@@ -315,3 +315,20 @@ def test_search(monkeypatch):
         assert 'Checks:' in result.output
         assert 'Dashboards:' in result.output
         assert 'Grafana Dashboards:' in result.output
+
+    get.return_value = {'alerts': [], 'checks': [], 'dashboards': [], 'grafana_dashboards': [
+        {
+            "id": "eagleeye-operational-dashboard",
+            "team": "",
+            "title": "EagleEye operational dashboard"
+        }
+    ]}
+
+    with runner.isolated_filesystem():
+        with open('test.yaml', 'w') as fd:
+            yaml.dump({'url': 'foo', 'token': '123'}, fd)
+
+        result = runner.invoke(
+            cli, ['-c', 'test.yaml', 'search', 'eagle'], catch_exceptions=False)
+
+        assert 'eagle' in result.output

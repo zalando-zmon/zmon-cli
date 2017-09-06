@@ -249,7 +249,9 @@ class Zmon:
         :return: Deeplink to Grafana dashboard.
         :rtype: str
         """
-        return self.endpoint(GRAFANA_DASHBOARD_URL, dashboard['dashboard']['id'], base_url=self.base_url)
+        if dashboard.get('id', None):
+            return self.endpoint(GRAFANA_DASHBOARD_URL, dashboard['id'], base_url=self.base_url)
+        return ""
 
     @logged
     def status(self) -> dict:
@@ -620,7 +622,7 @@ class Zmon:
 ########################################################################################################################
 
     @logged
-    def search(self, q, teams: list=None) -> dict:
+    def search(self, q, limit: int=None, teams: list=None) -> dict:
         """
         Search ZMON dashboards, checks, alerts and grafana dashboards with optional team filtering.
 
@@ -651,6 +653,8 @@ class Zmon:
             raise ZmonArgumentError('"teams" should be a list!')
 
         params = {'query': q}
+        if limit:
+            params.update({'limit': limit})
         if teams:
             params['teams'] = ','.join(teams)
 

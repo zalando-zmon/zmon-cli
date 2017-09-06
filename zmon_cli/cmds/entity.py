@@ -12,6 +12,16 @@ from zmon_cli.output import render_entities, Output, log_http_exception
 
 from zmon_cli.client import ZmonArgumentError
 
+from calendar import timegm
+from time import strptime
+
+
+def entity_last_modified(e):
+    try:
+        return timegm(strptime(e.get('last_modified'), '%Y-%m-%d %H:%M:%S.%f'))
+    except:
+        return 0
+
 
 ########################################################################################################################
 # ENTITIES
@@ -57,6 +67,7 @@ def filter_entities(obj, key, value, output, pretty):
     with Output('Retrieving and filtering entities ...', nl=True, output=output, printer=render_entities,
                 pretty_json=pretty) as act:
         entities = client.get_entities(query={key: value})
+        entities = sorted(entities, key=entity_last_modified)
         act.echo(entities)
 
 

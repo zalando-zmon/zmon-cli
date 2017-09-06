@@ -132,7 +132,7 @@ def render_entities(entities, output):
         row['data'] = ' '.join(key_values)
         rows.append(row)
 
-    rows.sort(key=lambda r: (r['id'], r['type']))
+    rows.sort(key=lambda r: (r['last_modified_time'], r['id'], r['type']))
 
     with OutputFormat(output):
         print_table('id type last_modified_time data'.split(),

@@ -82,7 +82,7 @@ def test_zmon_view_urls(monkeypatch):
     assert '{}/tv/1234/'.format(URL) == zmon.token_login_url(token)
 
     # Grafana
-    dashboard = {'dashboard': {'id': 'grafana-dash'}, 'meta': {'type': 'db'}}
+    dashboard = {'id': 'grafana-dash'}
     assert '{}/grafana/dashboard/db/grafana-dash/'.format(URL) == zmon.grafana_dashboard_url(dashboard)
 
 
@@ -529,7 +529,7 @@ def test_zmon_search_team(monkeypatch):
 
     q = 'health check'
     teams = ['team-1', 'team-2']
-    search = zmon.search(q, teams)
+    search = zmon.search(q, teams=teams)
 
     assert search == result
 

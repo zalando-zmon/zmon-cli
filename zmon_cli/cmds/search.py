@@ -7,7 +7,7 @@ from zmon_cli.client import ZmonArgumentError
 
 
 @cli.command()
-@click.argument('search_query')
+@click.argument('search_query', default="")
 @click.option('--team', '-t', multiple=True, required=False,
               help='Filter search by team. Multiple teams filtering is supported.')
 @click.option('--limit', '-l', multiple=False, required=False,

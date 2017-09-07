@@ -646,9 +646,6 @@ class Zmon:
                 "grafana_dashboards": [{"id": "123", "title": "ZMON grafana", "team": ""}],
             }
         """
-        if not q:
-            raise ZmonArgumentError('No search query value!')
-
         if teams and type(teams) not in (list, tuple):
             raise ZmonArgumentError('"teams" should be a list!')
 

@@ -62,9 +62,9 @@ def log_http_exception(e, act=None):
         err('HTTP error: {} - {}'.format(e.response.status_code, e.response.reason))
         try:
             err(json.dumps(e.response.json(), indent=4))
-        except:
+        except Exception:
             err(e.response.text)
-    except:
+    except Exception:
         err('HTTP ERROR: {}'.format(e))
 
 

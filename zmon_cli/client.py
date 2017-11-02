@@ -38,6 +38,8 @@ DASHBOARD_VIEW_URL = '#/dashboards/views/'
 GRAFANA_DASHBOARD_URL = 'grafana/dashboard/db/'
 TOKEN_LOGIN_URL = 'tv/'
 
+DEFAULT_TIMEOUT = 10
+
 logger = logging.getLogger(__name__)
 
 parentheses_re = re.compile('[(]+|[)]+')
@@ -66,7 +68,7 @@ def logged(f):
     def wrapper(*args, **kwargs):
         try:
             return f(*args, **kwargs)
-        except:
+        except Exception:
             logger.error('ZMON client failed in: {}'.format(f.__name__))
             raise
 
@@ -83,7 +85,7 @@ def compare_entities(e1, e2):
 
         return (json.loads(json.dumps(e1_copy, cls=JSONDateEncoder)) ==
                 json.loads(json.dumps(e2_copy, cls=JSONDateEncoder)))
-    except:
+    except Exception:
         # We failed during json serialiazation/deserialization, fallback to *not-equal*!
         logger.exception('Failed in `compare_entities`')
         return False
@@ -119,7 +121,8 @@ class Zmon:
     """
 
     def __init__(
-            self, url, token=None, username=None, password=None, timeout=10, verify=True, user_agent=ZMON_USER_AGENT):
+            self, url, token=None, username=None, password=None, timeout=DEFAULT_TIMEOUT, verify=True,
+            user_agent=ZMON_USER_AGENT):
         """Initialize ZMON client."""
         self.timeout = timeout
 
@@ -129,7 +132,7 @@ class Zmon:
 
         self._session = requests.Session()
 
-        self._session.timeout = timeout
+        self._timeout = timeout
         self.user_agent = user_agent
 
         if username and password and token is None:
@@ -261,7 +264,7 @@ class Zmon:
         :return: ZMON status.
         :rtype: dict
         """
-        resp = self.session.get(self.endpoint(STATUS))
+        resp = self.session.get(self.endpoint(STATUS), timeout=self._timeout)
 
         return self.json(resp)
 
@@ -286,7 +289,7 @@ class Zmon:
 
         params = {'query': query_str} if query else None
 
-        resp = self.session.get(self.endpoint(ENTITIES), params=params)
+        resp = self.session.get(self.endpoint(ENTITIES), params=params, timeout=self._timeout)
 
         return self.json(resp)
 
@@ -303,7 +306,7 @@ class Zmon:
         """
         logger.debug('Retrieving entities with id: {} ...'.format(entity_id))
 
-        resp = self.session.get(self.endpoint(ENTITIES, entity_id, trailing_slash=False))
+        resp = self.session.get(self.endpoint(ENTITIES, entity_id, trailing_slash=False), timeout=self._timeout)
         return self.json(resp)
 
     @logged
@@ -330,7 +333,7 @@ class Zmon:
         logger.debug('Adding new entity: {} ...'.format(entity['id']))
 
         data = json.dumps(entity, cls=JSONDateEncoder)
-        resp = self.session.put(self.endpoint(ENTITIES, trailing_slash=False), data=data)
+        resp = self.session.put(self.endpoint(ENTITIES, trailing_slash=False), data=data, timeout=self._timeout)
 
         resp.raise_for_status()
 
@@ -374,7 +377,7 @@ class Zmon:
         :return: Dashboard dict.
         :rtype: dict
         """
-        resp = self.session.get(self.endpoint(DASHBOARD, dashboard_id))
+        resp = self.session.get(self.endpoint(DASHBOARD, dashboard_id), timeout=self._timeout)
 
         return self.json(resp)
 
@@ -394,11 +397,11 @@ class Zmon:
         if 'id' in dashboard and dashboard['id']:
             logger.debug('Updating dashboard with ID: {} ...'.format(dashboard['id']))
 
-            resp = self.session.post(self.endpoint(DASHBOARD, dashboard['id']), json=dashboard)
+            resp = self.session.post(self.endpoint(DASHBOARD, dashboard['id']), json=dashboard, timeout=self._timeout)
         else:
             # new dashboard
             logger.debug('Adding new dashboard ...')
-            resp = self.session.post(self.endpoint(DASHBOARD), json=dashboard)
+            resp = self.session.post(self.endpoint(DASHBOARD), json=dashboard, timeout=self._timeout)
 
         resp.raise_for_status()
 
@@ -419,7 +422,7 @@ class Zmon:
         :return: Check definition dict.
         :rtype: dict
         """
-        resp = self.session.get(self.endpoint(CHECK_DEF, definition_id))
+        resp = self.session.get(self.endpoint(CHECK_DEF, definition_id), timeout=self._timeout)
 
         # TODO: total hack! API returns 200 if check def does not exist!
         if resp.text == '':
@@ -436,7 +439,7 @@ class Zmon:
         :return: List of check-defs.
         :rtype: list
         """
-        resp = self.session.get(self.endpoint(ACTIVE_CHECK_DEF))
+        resp = self.session.get(self.endpoint(ACTIVE_CHECK_DEF), timeout=self._timeout)
 
         return self.json(resp).get('check_definitions')
 
@@ -465,7 +468,7 @@ class Zmon:
         if not skip_validation:
             self.validate_check_command(check_definition['command'])
 
-        resp = self.session.post(self.endpoint(CHECK_DEF), json=check_definition)
+        resp = self.session.post(self.endpoint(CHECK_DEF), json=check_definition, timeout=self._timeout)
 
         return self.json(resp)
 
@@ -501,7 +504,7 @@ class Zmon:
         :return: Alert definition dict.
         :rtype: dict
         """
-        resp = self.session.get(self.endpoint(ALERT_DEF, alert_id))
+        resp = self.session.get(self.endpoint(ALERT_DEF, alert_id), timeout=self._timeout)
 
         return self.json(resp)
 
@@ -513,7 +516,7 @@ class Zmon:
         :return: List of alert-defs.
         :rtype: list
         """
-        resp = self.session.get(self.endpoint(ACTIVE_ALERT_DEF))
+        resp = self.session.get(self.endpoint(ACTIVE_ALERT_DEF), timeout=self._timeout)
 
         return self.json(resp).get('alert_definitions')
 
@@ -540,7 +543,7 @@ class Zmon:
         if 'check_definition_id' not in alert_definition:
             raise ZmonArgumentError('Alert defintion must have "check_definition_id"')
 
-        resp = self.session.post(self.endpoint(ALERT_DEF), json=alert_definition)
+        resp = self.session.post(self.endpoint(ALERT_DEF), json=alert_definition, timeout=self._timeout)
 
         return self.json(resp)
 
@@ -571,7 +574,7 @@ class Zmon:
             alert_definition['status'] = 'ACTIVE'
 
         resp = self.session.put(
-            self.endpoint(ALERT_DEF, alert_definition['id']), json=alert_definition)
+            self.endpoint(ALERT_DEF, alert_definition['id']), json=alert_definition, timeout=self._timeout)
 
         return self.json(resp)
 
@@ -613,7 +616,7 @@ class Zmon:
                 "entity-id-3": 100
             }
         """
-        resp = self.session.get(self.endpoint(ALERT_DATA, alert_id, 'all-entities'))
+        resp = self.session.get(self.endpoint(ALERT_DATA, alert_id, 'all-entities'), timeout=self._timeout)
 
         return self.json(resp)
 
@@ -655,7 +658,7 @@ class Zmon:
         if teams:
             params['teams'] = ','.join(teams)
 
-        resp = self.session.get(self.endpoint(SEARCH), params=params)
+        resp = self.session.get(self.endpoint(SEARCH), params=params, timeout=self._timeout)
 
         return self.json(resp)
 
@@ -682,7 +685,7 @@ class Zmon:
               created: 2016-08-26 12:51:13.506000
               token: 9pSzKpcO
         """
-        resp = self.session.get(self.endpoint(TOKENS))
+        resp = self.session.get(self.endpoint(TOKENS), timeout=self._timeout)
 
         return self.json(resp)
 
@@ -696,7 +699,7 @@ class Zmon:
         :return: One-time token.
         :retype: str
         """
-        resp = self.session.post(self.endpoint(TOKENS), json={})
+        resp = self.session.post(self.endpoint(TOKENS), json={}, timeout=self._timeout)
 
         resp.raise_for_status()
 
@@ -717,7 +720,7 @@ class Zmon:
         :return: Grafana dashboard dict.
         :rtype: dict
         """
-        resp = self.session.get(self.endpoint(GRAFANA, grafana_dashboard_id))
+        resp = self.session.get(self.endpoint(GRAFANA, grafana_dashboard_id), timeout=self._timeout)
 
         return self.json(resp)
 
@@ -739,7 +742,7 @@ class Zmon:
         elif 'title' not in grafana_dashboard['dashboard']:
             raise ZmonArgumentError('Grafana dashboard must have "title"')
 
-        resp = self.session.post(self.endpoint(GRAFANA), json=grafana_dashboard)
+        resp = self.session.post(self.endpoint(GRAFANA), json=grafana_dashboard, timeout=self._timeout)
 
         return self.json(resp)
 
@@ -777,7 +780,7 @@ class Zmon:
         if not downtime.get('start_time') or not downtime.get('end_time'):
             raise ZmonArgumentError('Downtime must specify "start_time" and "end_time"')
 
-        resp = self.session.post(self.endpoint(DOWNTIME), json=downtime)
+        resp = self.session.post(self.endpoint(DOWNTIME), json=downtime, timeout=self._timeout)
 
         return self.json(resp)
 
@@ -787,7 +790,7 @@ class Zmon:
 
     @logged
     def get_groups(self):
-        resp = self.session.get(self.endpoint(GROUPS))
+        resp = self.session.get(self.endpoint(GROUPS), timeout=self._timeout)
 
         return self.json(resp)
 
@@ -801,7 +804,7 @@ class Zmon:
 
         logger.debug('Switching active user: {}'.format(user_name))
 
-        resp = self.session.put(self.endpoint(GROUPS, group_name, 'active', user_name))
+        resp = self.session.put(self.endpoint(GROUPS, group_name, 'active', user_name), timeout=self._timeout)
 
         if not resp.ok:
             logger.error('Failed to switch active user {}'.format(user_name))
@@ -811,7 +814,7 @@ class Zmon:
 
     @logged
     def add_member(self, group_name, user_name):
-        resp = self.session.put(self.endpoint(GROUPS, group_name, MEMBER, user_name))
+        resp = self.session.put(self.endpoint(GROUPS, group_name, MEMBER, user_name), timeout=self._timeout)
 
         resp.raise_for_status
 
@@ -827,7 +830,7 @@ class Zmon:
 
     @logged
     def add_phone(self, member_email, phone_nr):
-        resp = self.session.put(self.endpoint(GROUPS, member_email, PHONE, phone_nr))
+        resp = self.session.put(self.endpoint(GROUPS, member_email, PHONE, phone_nr), timeout=self._timeout)
 
         resp.raise_for_status()
 
@@ -843,7 +846,7 @@ class Zmon:
 
     @logged
     def set_name(self, member_email, member_name):
-        resp = self.session.put(self.endpoint(GROUPS, member_email, PHONE, member_name))
+        resp = self.session.put(self.endpoint(GROUPS, member_email, PHONE, member_name), timeout=self._timeout)
 
         resp.raise_for_status()
 

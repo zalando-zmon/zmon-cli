@@ -19,7 +19,7 @@ from time import strptime
 def entity_last_modified(e):
     try:
         return timegm(strptime(e.get('last_modified'), '%Y-%m-%d %H:%M:%S.%f'))
-    except:
+    except Exception:
         return 0
 
 

@@ -5,7 +5,7 @@ import yaml
 import requests
 import click
 
-from clickclick import AliasedGroup, Action, action, ok
+from clickclick import AliasedGroup, Action, action, ok, fatal_error
 
 from zmon_cli.cmds.command import cli, get_client, output_option, yaml_output_option, pretty_json
 from zmon_cli.output import render_entities, Output, log_http_exception
@@ -56,18 +56,30 @@ def get_entity(obj, entity_id, output, pretty):
 
 
 @entities.command('filter')
-@click.argument('key')
-@click.argument('value')
+@click.argument('filters', nargs=-1)
 @click.pass_obj
 @output_option
 @pretty_json
-def filter_entities(obj, key, value, output, pretty):
-    """List entities filtered by a certain key"""
+def filter_entities(obj, filters, output, pretty):
+    """
+    List entities filtered by key values pairs
+
+    E.g.:
+        zmon entities filter type instance application_id my-app
+    """
     client = get_client(obj.config)
+
+    if len(filters) % 2:
+        fatal_error('Invalid filters count: expected even number of args!')
+
     with Output('Retrieving and filtering entities ...', nl=True, output=output, printer=render_entities,
                 pretty_json=pretty) as act:
-        entities = client.get_entities(query={key: value})
+
+        query = dict(zip(filters[0::2], filters[1::2]))
+
+        entities = client.get_entities(query=query)
         entities = sorted(entities, key=entity_last_modified)
+
         act.echo(entities)
 
 

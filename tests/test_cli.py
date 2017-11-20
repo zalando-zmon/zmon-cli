@@ -295,6 +295,32 @@ def test_filter_check_definitions(monkeypatch):
         assert 'check-2' not in out
 
 
+def test_filter_entities(monkeypatch):
+    get = MagicMock()
+    get.return_value = [
+        {'id': 'e-1', 'type': 'instance', 'application_id': 'app-1', 'last_modified': '2017-01-01 01:01:01.000'}
+    ]
+
+    monkeypatch.setattr('zmon_cli.client.Zmon.get_entities', get)
+    monkeypatch.setattr('zmon_cli.cmds.command.get_client', get_client)
+
+    runner = CliRunner()
+
+    with runner.isolated_filesystem():
+        with open('test.yaml', 'w') as fd:
+            yaml.dump({'url': 'foo', 'token': 123}, fd)
+
+        result = runner.invoke(
+            cli, ['-c', 'test.yaml', 'e', 'f', 'type', 'instance', 'application_id', 'app-1'], catch_exceptions=False)
+
+        out = result.output.rstrip()
+
+        assert 'e-1' in out
+        assert 'app-1' in out
+
+        get.assert_called_with(query={'type': 'instance', 'application_id': 'app-1'})
+
+
 def test_search(monkeypatch):
     get = MagicMock()
     get.return_value = {'alerts': [], 'checks': [], 'dashboards': [], 'grafana_dashboards': []}

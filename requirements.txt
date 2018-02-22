@@ -3,3 +3,4 @@ easydict
 PyYAML>=3.11
 requests>=2.2.1
 stups-zign>=1.1.26
+opentracing_utils

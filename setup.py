@@ -134,6 +134,7 @@ def setup_package():
         keywords='zmon monitoring command line interface',
         classifiers=CLASSIFIERS,
         test_suite='tests',
+        dependency_links=['git+https://github.com/zalando-zmon/opentracing-utils.git#egg=opentracing_utils'],
         packages=setuptools.find_packages(exclude=['tests', 'tests.*']),
         install_requires=get_install_requirements('requirements.txt'),
         setup_requires=['flake8'],

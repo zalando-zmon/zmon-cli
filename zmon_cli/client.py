@@ -891,28 +891,17 @@ class Zmon:
 # GROUPS - MEMBERS - ???
 ########################################################################################################################
 
-    @trace()
     @logged
     def get_groups(self):
         resp = self.session.get(self.endpoint(GROUPS), timeout=self._timeout)
 
         return self.json(resp)
 
-    @trace(pass_span=True)
     @logged
-    def switch_active_user(self, group_name, user_name, **kwargs):
-        current_span = extract_span_from_kwargs(**kwargs)
-        current_span.set_tag('group', group_name)
-        current_span.set_tag('user', user_name)
-
+    def switch_active_user(self, group_name, user_name):
         resp = self.session.delete(self.endpoint(GROUPS, group_name, 'active'))
 
         if not resp.ok:
-            current_span.set_tag('error', True)
-            current_span.log_kv({
-                'message': 'Failed to de-activate group: {}'.format(group_name),
-                'exception': resp.text,
-            })
             logger.error('Failed to de-activate group: {}'.format(group_name))
             resp.raise_for_status()
 
@@ -921,99 +910,47 @@ class Zmon:
         resp = self.session.put(self.endpoint(GROUPS, group_name, 'active', user_name), timeout=self._timeout)
 
         if not resp.ok:
-            current_span.set_tag('error', True)
-            current_span.log_kv({
-                'message': 'Failed to switch active user {}'.format(user_name),
-                'exception': resp.text,
-            })
             logger.error('Failed to switch active user {}'.format(user_name))
             resp.raise_for_status()
 
         return resp.text == '1'
 
-    @trace(pass_span=True)
     @logged
-    def add_member(self, group_name, user_name, **kwargs):
-        current_span = extract_span_from_kwargs(**kwargs)
-        current_span.set_tag('group', group_name)
-        current_span.set_tag('user', user_name)
-
+    def add_member(self, group_name, user_name):
         resp = self.session.put(self.endpoint(GROUPS, group_name, MEMBER, user_name), timeout=self._timeout)
 
-        try:
-            resp.raise_for_status()
-        except Exception:
-            current_span.set_tag('error', True)
-            current_span.log_kv({'exception': traceback.format_exc()})
-            raise
+        resp.raise_for_status()
 
         return resp.text == '1'
 
-    @trace(pass_span=True)
     @logged
-    def remove_member(self, group_name, user_name, **kwargs):
-        current_span = extract_span_from_kwargs(**kwargs)
-        current_span.set_tag('group', group_name)
-        current_span.set_tag('user', user_name)
-
+    def remove_member(self, group_name, user_name):
         resp = self.session.delete(self.endpoint(GROUPS, group_name, MEMBER, user_name))
 
-        try:
-            resp.raise_for_status()
-        except Exception:
-            current_span.set_tag('error', True)
-            current_span.log_kv({'exception': traceback.format_exc()})
-            raise
+        resp.raise_for_status()
 
         return resp.text == '1'
 
-    @trace(pass_span=True)
     @logged
-    def add_phone(self, member_email, phone_nr, **kwargs):
-        current_span = extract_span_from_kwargs(**kwargs)
-        current_span.set_tag('email', member_email)
-
+    def add_phone(self, member_email, phone_nr):
         resp = self.session.put(self.endpoint(GROUPS, member_email, PHONE, phone_nr), timeout=self._timeout)
 
-        try:
-            resp.raise_for_status()
-        except Exception:
-            current_span.set_tag('error', True)
-            current_span.log_kv({'exception': traceback.format_exc()})
-            raise
+        resp.raise_for_status()
 
         return resp.text == '1'
 
-    @trace(pass_span=True)
     @logged
-    def remove_phone(self, member_email, phone_nr, **kwargs):
-        current_span = extract_span_from_kwargs(**kwargs)
-        current_span.set_tag('email', member_email)
-
+    def remove_phone(self, member_email, phone_nr):
         resp = self.session.delete(self.endpoint(GROUPS, member_email, PHONE, phone_nr))
 
-        try:
-            resp.raise_for_status()
-        except Exception:
-            current_span.set_tag('error', True)
-            current_span.log_kv({'exception': traceback.format_exc()})
-            raise
+        resp.raise_for_status()
 
         return resp.text == '1'
 
-    @trace(pass_span=True)
     @logged
-    def set_name(self, member_email, member_name, **kwargs):
-        current_span = extract_span_from_kwargs(**kwargs)
-        current_span.set_tag('email', member_email)
-
+    def set_name(self, member_email, member_name):
         resp = self.session.put(self.endpoint(GROUPS, member_email, PHONE, member_name), timeout=self._timeout)
 
-        try:
-            resp.raise_for_status()
-        except Exception:
-            current_span.set_tag('error', True)
-            current_span.log_kv({'exception': traceback.format_exc()})
-            raise
+        resp.raise_for_status()
 
         return resp

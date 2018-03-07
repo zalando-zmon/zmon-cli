@@ -6,6 +6,9 @@ import re
 
 from datetime import datetime
 from urllib.parse import urljoin, urlsplit, urlunsplit, SplitResult
+from opentracing_utils import trace, extract_span_from_kwargs, trace_requests
+trace_requests() # noqa
+import traceback
 
 import requests
 
@@ -272,8 +275,9 @@ class Zmon:
 # ENTITIES
 ########################################################################################################################
 
+    @trace(pass_span=True)
     @logged
-    def get_entities(self, query=None) -> list:
+    def get_entities(self, query=None, **kwargs) -> list:
         """
         Get ZMON entities, with optional filtering.
 
@@ -287,14 +291,18 @@ class Zmon:
         query_str = json.dumps(query) if query else ''
         logger.debug('Retrieving entities with query: {} ...'.format(query_str))
 
+        current_span = extract_span_from_kwargs(**kwargs)
+        current_span.log_kv({'query', query_str})
+
         params = {'query': query_str} if query else None
 
         resp = self.session.get(self.endpoint(ENTITIES), params=params, timeout=self._timeout)
 
         return self.json(resp)
 
+    @trace(pass_span=True)
     @logged
-    def get_entity(self, entity_id: str) -> str:
+    def get_entity(self, entity_id: str, **kwargs) -> str:
         """
         Retrieve single entity.
 
@@ -306,11 +314,15 @@ class Zmon:
         """
         logger.debug('Retrieving entities with id: {} ...'.format(entity_id))
 
+        current_span = extract_span_from_kwargs(**kwargs)
+        current_span.set_tag('entity_id', entity_id)
+
         resp = self.session.get(self.endpoint(ENTITIES, entity_id, trailing_slash=False), timeout=self._timeout)
         return self.json(resp)
 
+    @trace(pass_span=True)
     @logged
-    def add_entity(self, entity: dict) -> requests.Response:
+    def add_entity(self, entity: dict, **kwargs) -> requests.Response:
         """
         Create or update an entity on ZMON.
 
@@ -332,6 +344,9 @@ class Zmon:
 
         logger.debug('Adding new entity: {} ...'.format(entity['id']))
 
+        current_span = extract_span_from_kwargs(**kwargs)
+        current_span.set_tag('entity_id', entity['id'])
+
         data = json.dumps(entity, cls=JSONDateEncoder)
         resp = self.session.put(self.endpoint(ENTITIES, trailing_slash=False), data=data, timeout=self._timeout)
 
@@ -339,8 +354,9 @@ class Zmon:
 
         return resp
 
+    @trace(pass_span=True)
     @logged
-    def delete_entity(self, entity_id: str) -> bool:
+    def delete_entity(self, entity_id: str, **kwargs) -> bool:
         """
         Delete entity from ZMON.
 
@@ -356,6 +372,9 @@ class Zmon:
         """
         logger.debug('Removing existing entity: {} ...'.format(entity_id))
 
+        current_span = extract_span_from_kwargs(**kwargs)
+        current_span.set_tag('entity_id', entity_id)
+
         resp = self.session.delete(self.endpoint(ENTITIES, entity_id))
 
         resp.raise_for_status()
@@ -366,8 +385,9 @@ class Zmon:
 # DASHBOARD
 ########################################################################################################################
 
+    @trace(pass_span=True)
     @logged
-    def get_dashboard(self, dashboard_id: str) -> dict:
+    def get_dashboard(self, dashboard_id: str, **kwargs) -> dict:
         """
         Retrieve a ZMON dashboard.
 
@@ -377,12 +397,16 @@ class Zmon:
         :return: Dashboard dict.
         :rtype: dict
         """
+        current_span = extract_span_from_kwargs(**kwargs)
+        current_span.set_tag('dashboard_id', dashboard_id)
+
         resp = self.session.get(self.endpoint(DASHBOARD, dashboard_id), timeout=self._timeout)
 
         return self.json(resp)
 
+    @trace(pass_span=True)
     @logged
-    def update_dashboard(self, dashboard: dict) -> dict:
+    def update_dashboard(self, dashboard: dict, **kwargs) -> dict:
         """
         Create or update dashboard.
 
@@ -394,8 +418,10 @@ class Zmon:
         :return: Dashboard dict.
         :rtype: dict
         """
+        current_span = extract_span_from_kwargs(**kwargs)
         if 'id' in dashboard and dashboard['id']:
             logger.debug('Updating dashboard with ID: {} ...'.format(dashboard['id']))
+            current_span.set_tag('dashboard_id', dashboard['id'])
 
             resp = self.session.post(self.endpoint(DASHBOARD, dashboard['id']), json=dashboard, timeout=self._timeout)
         else:
@@ -411,8 +437,9 @@ class Zmon:
 # CHECK-DEFS
 ########################################################################################################################
 
+    @trace(pass_span=True)
     @logged
-    def get_check_definition(self, definition_id: int) -> dict:
+    def get_check_definition(self, definition_id: int, **kwargs) -> dict:
         """
         Retrieve check defintion.
 
@@ -422,6 +449,9 @@ class Zmon:
         :return: Check definition dict.
         :rtype: dict
         """
+        current_span = extract_span_from_kwargs(**kwargs)
+        current_span.set_tag('check_id', definition_id)
+
         resp = self.session.get(self.endpoint(CHECK_DEF, definition_id), timeout=self._timeout)
 
         # TODO: total hack! API returns 200 if check def does not exist!
@@ -431,6 +461,7 @@ class Zmon:
 
         return self.json(resp)
 
+    @trace()
     @logged
     def get_check_definitions(self) -> list:
         """
@@ -443,8 +474,9 @@ class Zmon:
 
         return self.json(resp).get('check_definitions')
 
+    @trace(pass_span=True)
     @logged
-    def update_check_definition(self, check_definition: dict, skip_validation: bool=False) -> dict:
+    def update_check_definition(self, check_definition: dict, skip_validation: bool=False, **kwargs) -> dict:
         """
         Update existing check definition.
 
@@ -459,21 +491,30 @@ class Zmon:
         :return: Check definition dict.
         :rtype: dict
         """
+        current_span = extract_span_from_kwargs(**kwargs)
         if 'owning_team' not in check_definition:
+            current_span.set_tag('error', True)
+            current_span.log_kv({'exception': 'Check definition must have "owning_team"'})
             raise ZmonArgumentError('Check definition must have "owning_team"')
 
         if 'status' not in check_definition:
             check_definition['status'] = 'ACTIVE'
 
         if not skip_validation:
-            self.validate_check_command(check_definition['command'])
+            try:
+                self.validate_check_command(check_definition['command'])
+            except Exception:
+                current_span.set_tag('error', True)
+                current_span.log_kv({'exception': traceback.format_exc()})
+                raise
 
         resp = self.session.post(self.endpoint(CHECK_DEF), json=check_definition, timeout=self._timeout)
 
         return self.json(resp)
 
+    @trace(pass_span=True)
     @logged
-    def delete_check_definition(self, check_definition_id: int) -> requests.Response:
+    def delete_check_definition(self, check_definition_id: int, **kwargs) -> requests.Response:
         """
         Delete existing check definition.
 
@@ -483,6 +524,9 @@ class Zmon:
         :return: HTTP response.
         :rtype: :class:`requests.Response`
         """
+        current_span = extract_span_from_kwargs(**kwargs)
+        current_span.set_tag('check_id', str(check_definition_id))
+
         resp = self.session.delete(self.endpoint(CHECK_DEF, check_definition_id))
 
         resp.raise_for_status()
@@ -493,8 +537,9 @@ class Zmon:
 # ALERT-DEFS & DATA
 ########################################################################################################################
 
+    @trace(pass_span=True)
     @logged
-    def get_alert_definition(self, alert_id: int) -> dict:
+    def get_alert_definition(self, alert_id: int, **kwargs) -> dict:
         """
         Retrieve alert definition.
 
@@ -504,10 +549,14 @@ class Zmon:
         :return: Alert definition dict.
         :rtype: dict
         """
+        current_span = extract_span_from_kwargs(**kwargs)
+        current_span.set_tag('alert_id', str(alert_id))
+
         resp = self.session.get(self.endpoint(ALERT_DEF, alert_id), timeout=self._timeout)
 
         return self.json(resp)
 
+    @trace()
     @logged
     def get_alert_definitions(self) -> list:
         """
@@ -520,8 +569,9 @@ class Zmon:
 
         return self.json(resp).get('alert_definitions')
 
+    @trace(pass_span=True)
     @logged
-    def create_alert_definition(self, alert_definition: dict) -> dict:
+    def create_alert_definition(self, alert_definition: dict, **kwargs) -> dict:
         """
         Create new alert definition.
 
@@ -534,21 +584,28 @@ class Zmon:
         :return: Alert definition dict.
         :rtype: dict
         """
+        current_span = extract_span_from_kwargs(**kwargs)
         if 'last_modified_by' not in alert_definition:
+            current_span.set_tag('error', True)
+            current_span.log_kv({'exception': 'Alert definition must have "last_modified_by"'})
             raise ZmonArgumentError('Alert definition must have "last_modified_by"')
 
         if 'status' not in alert_definition:
             alert_definition['status'] = 'ACTIVE'
 
         if 'check_definition_id' not in alert_definition:
+            current_span.set_tag('error', True)
+            current_span.log_kv({'exception': 'Alert definition must have "last_modified_by"'})
             raise ZmonArgumentError('Alert defintion must have "check_definition_id"')
+        current_span.set_tag('check_id', alert_definition['check_definition_id'])
 
         resp = self.session.post(self.endpoint(ALERT_DEF), json=alert_definition, timeout=self._timeout)
 
         return self.json(resp)
 
+    @trace(pass_span=True)
     @logged
-    def update_alert_definition(self, alert_definition: dict) -> dict:
+    def update_alert_definition(self, alert_definition: dict, **kwargs) -> dict:
         """
         Update existing alert definition.
 
@@ -561,14 +618,23 @@ class Zmon:
         :return: Alert definition dict.
         :rtype: dict
         """
+        current_span = extract_span_from_kwargs(**kwargs)
         if 'last_modified_by' not in alert_definition:
+            current_span.set_tag('error', True)
+            current_span.log_kv({'exception': 'Alert definition must have "last_modified_by"'})
             raise ZmonArgumentError('Alert definition must have "last_modified_by"')
 
         if 'id' not in alert_definition:
+            current_span.set_tag('error', True)
+            current_span.log_kv({'exception': 'Alert definition must have "id"'})
             raise ZmonArgumentError('Alert definition must have "id"')
+        current_span.set_tag('alert_id', alert_definition['id'])
 
         if 'check_definition_id' not in alert_definition:
+            current_span.set_tag('error', True)
+            current_span.log_kv({'exception': 'Alert definition must have "check_definition_id"'})
             raise ZmonArgumentError('Alert defintion must have "check_definition_id"')
+        current_span.set_tag('check_id', alert_definition['check_definition_id'])
 
         if 'status' not in alert_definition:
             alert_definition['status'] = 'ACTIVE'
@@ -578,8 +644,9 @@ class Zmon:
 
         return self.json(resp)
 
+    @trace(pass_span=True)
     @logged
-    def delete_alert_definition(self, alert_definition_id: int) -> dict:
+    def delete_alert_definition(self, alert_definition_id: int, **kwargs) -> dict:
         """
         Delete existing alert definition.
 
@@ -589,12 +656,15 @@ class Zmon:
         :return: Alert definition dict.
         :rtype: dict
         """
+        current_span = extract_span_from_kwargs(**kwargs)
+        current_span.set_tag('alert_id', str(alert_definition_id))
         resp = self.session.delete(self.endpoint(ALERT_DEF, alert_definition_id))
 
         return self.json(resp)
 
+    @trace(pass_span=True)
     @logged
-    def get_alert_data(self, alert_id: int) -> dict:
+    def get_alert_data(self, alert_id: int, **kwargs) -> dict:
         """
         Retrieve alert data.
 
@@ -616,6 +686,8 @@ class Zmon:
                 "entity-id-3": 100
             }
         """
+        current_span = extract_span_from_kwargs(**kwargs)
+        current_span.set_tag('alert_id', str(alert_id))
         resp = self.session.get(self.endpoint(ALERT_DATA, alert_id, 'all-entities'), timeout=self._timeout)
 
         return self.json(resp)
@@ -624,8 +696,9 @@ class Zmon:
 # SEARCH
 ########################################################################################################################
 
+    @trace(pass_span=True)
     @logged
-    def search(self, q, limit: int=None, teams: list=None) -> dict:
+    def search(self, q, limit: int=None, teams: list=None, **kwargs) -> dict:
         """
         Search ZMON dashboards, checks, alerts and grafana dashboards with optional team filtering.
 
@@ -649,7 +722,10 @@ class Zmon:
                 "grafana_dashboards": [{"id": "123", "title": "ZMON grafana", "team": ""}],
             }
         """
+        current_span = extract_span_from_kwargs(**kwargs)
         if teams and type(teams) not in (list, tuple):
+            current_span.set_tag('error', True)
+            current_span.log_kv({'exception': '"teams" should be a list'})
             raise ZmonArgumentError('"teams" should be a list!')
 
         params = {'query': q}
@@ -658,6 +734,7 @@ class Zmon:
         if teams:
             params['teams'] = ','.join(teams)
 
+        current_span.log_kv({'query', json.dumps(params)})
         resp = self.session.get(self.endpoint(SEARCH), params=params, timeout=self._timeout)
 
         return self.json(resp)
@@ -667,6 +744,7 @@ class Zmon:
 # ONETIME-TOKENS
 ########################################################################################################################
 
+    @trace()
     @logged
     def list_onetime_tokens(self) -> list:
         """
@@ -689,6 +767,7 @@ class Zmon:
 
         return self.json(resp)
 
+    @trace()
     @logged
     def get_onetime_token(self) -> str:
         """
@@ -709,8 +788,9 @@ class Zmon:
 # GRAFANA
 ########################################################################################################################
 
+    @trace(pass_span=True)
     @logged
-    def get_grafana_dashboard(self, grafana_dashboard_id: str) -> dict:
+    def get_grafana_dashboard(self, grafana_dashboard_id: str, **kwargs) -> dict:
         """
         Retrieve Grafana dashboard.
 
@@ -720,12 +800,15 @@ class Zmon:
         :return: Grafana dashboard dict.
         :rtype: dict
         """
+        current_span = extract_span_from_kwargs(**kwargs)
+        current_span.set_tag('grafana_dashboard_id', grafana_dashboard_id)
         resp = self.session.get(self.endpoint(GRAFANA, grafana_dashboard_id), timeout=self._timeout)
 
         return self.json(resp)
 
+    @trace(pass_span=True)
     @logged
-    def update_grafana_dashboard(self, grafana_dashboard: dict) -> dict:
+    def update_grafana_dashboard(self, grafana_dashboard: dict, **kwargs) -> dict:
         """
         Update existing Grafana dashboard.
 
@@ -737,10 +820,19 @@ class Zmon:
         :return: Grafana dashboard dict.
         :rtype: dict
         """
+        current_span = extract_span_from_kwargs(**kwargs)
+
         if 'id' not in grafana_dashboard['dashboard']:
+            current_span.set_tag('error', True)
+            current_span.log_kv({'exception': 'Grafana dashboard must have "id"'})
             raise ZmonArgumentError('Grafana dashboard must have "id"')
+
         elif 'title' not in grafana_dashboard['dashboard']:
+            current_span.set_tag('error', True)
+            current_span.log_kv({'exception': 'Grafana dashboard must have "title"'})
             raise ZmonArgumentError('Grafana dashboard must have "title"')
+
+        current_span.set_tag('grafana_dashboard_id', grafana_dashboard['dashboard']['id'])
 
         resp = self.session.post(self.endpoint(GRAFANA), json=grafana_dashboard, timeout=self._timeout)
 
@@ -750,8 +842,9 @@ class Zmon:
 # DOWNTIMES
 ########################################################################################################################
 
+    @trace(pass_span=True)
     @logged
-    def create_downtime(self, downtime: dict) -> dict:
+    def create_downtime(self, downtime: dict, **kwargs) -> dict:
         """
         Create a downtime for specific entities.
 
@@ -774,11 +867,21 @@ class Zmon:
                 "end_time": 1473341037.312921,
             }
         """
+        current_span = extract_span_from_kwargs(**kwargs)
         if not downtime.get('entities'):
+            current_span.set_tag('error', True)
+            current_span.log_kv({'exception': 'At least one entity ID should be specified'})
             raise ZmonArgumentError('At least one entity ID should be specified')
 
         if not downtime.get('start_time') or not downtime.get('end_time'):
+            current_span.set_tag('error', True)
+            current_span.log_kv({'exception': 'Downtime must specify "start_time" and "end_time"'})
             raise ZmonArgumentError('Downtime must specify "start_time" and "end_time"')
+
+        current_span.set_tag('entity_ids', str(downtime.get('entities')))
+        # FIXME - those also?
+        # current_span.set_tag('start_time', str(downtime.get('start_time')))
+        # current_span.set_tag('end_time', str(downtime.get('end_time')))
 
         resp = self.session.post(self.endpoint(DOWNTIME), json=downtime, timeout=self._timeout)
 
@@ -816,7 +919,7 @@ class Zmon:
     def add_member(self, group_name, user_name):
         resp = self.session.put(self.endpoint(GROUPS, group_name, MEMBER, user_name), timeout=self._timeout)
 
-        resp.raise_for_status
+        resp.raise_for_status()
 
         return resp.text == '1'
 

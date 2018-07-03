@@ -13,3 +13,5 @@ junit.xml
 htmlcov/
 *.swp
 test.yaml
+
+Pipfile.lock

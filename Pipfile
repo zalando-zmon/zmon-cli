@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[requires]
+python_version = "3.5"
+
+[dev-packages]
+"flake8" = "*"
+pytest = "*"
+
+[packages]
+clickclick = ">=1.1"
+easydict = "*"
+requests = ">=2.2.1"
+stups-zign = ">=1.1.26"
+opentracing-utils = "*"
+PyYAML = ">=3.11"

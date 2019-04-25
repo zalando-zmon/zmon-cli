@@ -3,14 +3,14 @@ import logging
 import json
 import functools
 import re
-
-from datetime import datetime
-from urllib.parse import urljoin, urlsplit, urlunsplit, SplitResult
-from opentracing_utils import trace, extract_span_from_kwargs, trace_requests
-trace_requests() # noqa
 import traceback
 
 import requests
+
+from datetime import datetime
+from urllib.parse import urljoin, urlsplit, urlunsplit, SplitResult
+
+from opentracing_utils import trace, extract_span_from_kwargs
 
 from zmon_cli import __version__
 from zmon_cli.config import DEFAULT_TIMEOUT

@@ -11,6 +11,7 @@ from clickclick import Action, error
 
 
 DEFAULT_CONFIG_FILE = '~/.zmon-cli.yaml'
+DEFAULT_TIMEOUT = 10
 
 
 def configure_logging(loglevel):

@@ -169,4 +169,4 @@ def delete_alert_definition(obj, alert_id):
 @alert_definitions.command('help')
 @click.pass_context
 def help(ctx):
-        print(ctx.parent.get_help())
+    print(ctx.parent.get_help())

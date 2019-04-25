@@ -52,4 +52,4 @@ def grafana_update(obj, yaml_file):
 @grafana.command('help')
 @click.pass_context
 def help(ctx):
-        print(ctx.parent.get_help())
+    print(ctx.parent.get_help())

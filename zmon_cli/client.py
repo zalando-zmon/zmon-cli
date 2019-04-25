@@ -13,6 +13,7 @@ import traceback
 import requests
 
 from zmon_cli import __version__
+from zmon_cli.config import DEFAULT_TIMEOUT
 
 
 API_VERSION = 'v1'
@@ -41,12 +42,10 @@ DASHBOARD_VIEW_URL = '#/dashboards/views/'
 GRAFANA_DASHBOARD_URL = 'grafana/dashboard/db/'
 TOKEN_LOGIN_URL = 'tv/'
 
-DEFAULT_TIMEOUT = 10
-
 logger = logging.getLogger(__name__)
 
 parentheses_re = re.compile('[(]+|[)]+')
-invalid_entity_id_re = re.compile('[^a-zA-Z0-9-@_.\[\]\:]+')
+invalid_entity_id_re = re.compile('[^a-zA-Z0-9-@_.\\[\\]\\:]+')
 
 
 class JSONDateEncoder(json.JSONEncoder):
@@ -476,7 +475,7 @@ class Zmon:
 
     @trace(pass_span=True)
     @logged
-    def update_check_definition(self, check_definition: dict, skip_validation: bool=False, **kwargs) -> dict:
+    def update_check_definition(self, check_definition, skip_validation=False, **kwargs) -> dict:
         """
         Update existing check definition.
 
@@ -698,7 +697,7 @@ class Zmon:
 
     @trace(pass_span=True)
     @logged
-    def search(self, q, limit: int=None, teams: list=None, **kwargs) -> dict:
+    def search(self, q, limit=None, teams=None, **kwargs) -> dict:
         """
         Search ZMON dashboards, checks, alerts and grafana dashboards with optional team filtering.
 

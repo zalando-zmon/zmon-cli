@@ -291,7 +291,7 @@ class Zmon:
         logger.debug('Retrieving entities with query: {} ...'.format(query_str))
 
         current_span = extract_span_from_kwargs(**kwargs)
-        current_span.log_kv({'query', query_str})
+        current_span.log_kv({'query': query_str})
 
         params = {'query': query_str} if query else None
 

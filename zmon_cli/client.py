@@ -28,7 +28,7 @@ CHECK_DEF = 'check-definitions'
 DASHBOARD = 'dashboard'
 DOWNTIME = 'downtimes'
 ENTITIES = 'entities'
-GRAFANA = 'grafana2-dashboards'
+GRAFANA = 'visualization'
 GROUPS = 'groups'
 MEMBER = 'member'
 PHONE = 'phone'
@@ -39,7 +39,7 @@ TOKENS = 'onetime-tokens'
 ALERT_DETAILS_VIEW_URL = '#/alert-details/'
 CHECK_DEF_VIEW_URL = '#/check-definitions/view/'
 DASHBOARD_VIEW_URL = '#/dashboards/views/'
-GRAFANA_DASHBOARD_URL = 'grafana/dashboard/db/'
+GRAFANA_DASHBOARD_URL = 'visualization/'
 TOKEN_LOGIN_URL = 'tv/'
 
 logger = logging.getLogger(__name__)
@@ -255,7 +255,7 @@ class Zmon:
         :rtype: str
         """
         if dashboard.get('id', None):
-            return self.endpoint(GRAFANA_DASHBOARD_URL, dashboard['id'], base_url=self.base_url)
+            return self.endpoint(GRAFANA_DASHBOARD_URL, dashboard['id'], base_url=self.base_url, trailing_slash=False)
         return ""
 
     @logged
@@ -801,7 +801,25 @@ class Zmon:
         """
         current_span = extract_span_from_kwargs(**kwargs)
         current_span.set_tag('grafana_dashboard_id', grafana_dashboard_id)
-        resp = self.session.get(self.endpoint(GRAFANA, grafana_dashboard_id), timeout=self._timeout)
+        resp = self.session.get(self.endpoint(GRAFANA, grafana_dashboard_id, trailing_slash=False), timeout=self._timeout)
+
+        return self.json(resp)
+
+    @trace(pass_span=True)
+    @logged
+    def delete_grafana_dashboard(self, grafana_dashboard_id: str, **kwargs) -> dict:
+        """
+        Delete Grafana dashboard.
+
+        :param grafana_dashboard_id: Grafana dashboard ID.
+        :type grafana_dashboard_id: str
+
+        :return: Grafana dashboard dict.
+        :rtype: dict
+        """
+        current_span = extract_span_from_kwargs(**kwargs)
+        current_span.set_tag('grafana_dashboard_id', grafana_dashboard_id)
+        resp = self.session.delete(self.endpoint(GRAFANA, grafana_dashboard_id, trailing_slash=False), timeout=self._timeout)
 
         return self.json(resp)
 

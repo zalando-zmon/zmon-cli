@@ -28,7 +28,7 @@ CHECK_DEF = 'check-definitions'
 DASHBOARD = 'dashboard'
 DOWNTIME = 'downtimes'
 ENTITIES = 'entities'
-GRAFANA = 'visualization'
+GRAFANA = 'visualization/dashboard'
 GROUPS = 'groups'
 MEMBER = 'member'
 PHONE = 'phone'
@@ -39,7 +39,7 @@ TOKENS = 'onetime-tokens'
 ALERT_DETAILS_VIEW_URL = '#/alert-details/'
 CHECK_DEF_VIEW_URL = '#/check-definitions/view/'
 DASHBOARD_VIEW_URL = '#/dashboards/views/'
-GRAFANA_DASHBOARD_URL = 'visualization/'
+GRAFANA_DASHBOARD_URL = 'visualization/dashboard/'
 TOKEN_LOGIN_URL = 'tv/'
 
 logger = logging.getLogger(__name__)
@@ -851,7 +851,7 @@ class Zmon:
 
         current_span.set_tag('grafana_dashboard_id', grafana_dashboard['dashboard']['id'])
 
-        resp = self.session.post(self.endpoint(GRAFANA), json=grafana_dashboard, timeout=self._timeout)
+        resp = self.session.post(self.endpoint(GRAFANA), json=json.dumps(grafana_dashboard), timeout=self._timeout)
 
         return self.json(resp)
 

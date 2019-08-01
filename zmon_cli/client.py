@@ -807,24 +807,6 @@ class Zmon:
 
     @trace(pass_span=True)
     @logged
-    def delete_grafana_dashboard(self, grafana_dashboard_id: str, **kwargs) -> dict:
-        """
-        Delete Grafana dashboard.
-
-        :param grafana_dashboard_id: Grafana dashboard ID.
-        :type grafana_dashboard_id: str
-
-        :return: Grafana dashboard dict.
-        :rtype: dict
-        """
-        current_span = extract_span_from_kwargs(**kwargs)
-        current_span.set_tag('grafana_dashboard_id', grafana_dashboard_id)
-        resp = self.session.delete(self.endpoint(GRAFANA, grafana_dashboard_id, trailing_slash=False), timeout=self._timeout)
-
-        return self.json(resp)
-
-    @trace(pass_span=True)
-    @logged
     def update_grafana_dashboard(self, grafana_dashboard: dict, **kwargs) -> dict:
         """
         Update existing Grafana dashboard.

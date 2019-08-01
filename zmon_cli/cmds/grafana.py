@@ -30,20 +30,6 @@ def grafana_get(obj, dashboard_id, output, pretty):
         act.echo(dashboard)
 
 
-@grafana.command('delete')
-@click.argument('dashboard_id', type=click.STRING)
-@click.pass_obj
-@yaml_output_option
-@pretty_json
-def grafana_delete(obj, dashboard_id, output, pretty):
-    """Get ZMON grafana dashboard"""
-    client = get_client(obj.config)
-
-    with Output('Deleting grafana dashboard ...', nl=True, output=output, pretty_json=pretty) as act:
-        dashboard = client.delete_grafana_dashboard(dashboard_id)
-        act.echo(dashboard)
-
-
 @grafana.command('update')
 @click.argument('yaml_file', type=click.File('rb'))
 @click.pass_obj

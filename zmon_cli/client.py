@@ -793,7 +793,7 @@ class Zmon:
         """
         Retrieve Grafana dashboard.
 
-        :param grafana_dashboard_id: Grafana dashboard ID.
+        :param grafana_dashboard_id: Grafana dashboard ID / UID (depending on Grafana version).
         :type grafana_dashboard_id: str
 
         :return: Grafana dashboard dict.

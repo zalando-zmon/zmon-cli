@@ -83,7 +83,7 @@ def test_zmon_view_urls(monkeypatch):
 
     # Grafana
     dashboard = {'id': 'grafana-dash'}
-    assert '{}/grafana/dashboard/db/grafana-dash/'.format(URL) == zmon.grafana_dashboard_url(dashboard)
+    assert '{}/visualization/dashboard/grafana-dash'.format(URL) == zmon.grafana_dashboard_url(dashboard)
 
 
 def test_zmon_headers(monkeypatch):
@@ -583,7 +583,7 @@ def test_zmon_get_grafana_dashboard(monkeypatch):
 
     assert check == result
 
-    get.assert_called_with(zmon.endpoint(client.GRAFANA, 1), timeout=DEFAULT_TIMEOUT)
+    get.assert_called_with(zmon.endpoint(client.GRAFANA, 1, trailing_slash=False), timeout=DEFAULT_TIMEOUT)
 
 
 @pytest.mark.parametrize('g,result', [
@@ -619,7 +619,7 @@ def test_zmon_update_grafana_dashboard(monkeypatch, g, result):
         check = zmon.update_grafana_dashboard(g)
         assert check == result
 
-        post.assert_called_with(zmon.endpoint(client.GRAFANA), json=g, timeout=DEFAULT_TIMEOUT)
+        post.assert_called_with(zmon.endpoint(client.GRAFANA, trailing_slash=False), json=json.dumps(g), timeout=DEFAULT_TIMEOUT)
 
 
 @pytest.mark.parametrize('d,result', [

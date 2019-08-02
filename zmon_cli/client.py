@@ -801,7 +801,8 @@ class Zmon:
         """
         current_span = extract_span_from_kwargs(**kwargs)
         current_span.set_tag('grafana_dashboard_id', grafana_dashboard_id)
-        resp = self.session.get(self.endpoint(GRAFANA, grafana_dashboard_id, trailing_slash=False), timeout=self._timeout)
+        url = self.endpoint(GRAFANA, grafana_dashboard_id, trailing_slash=False)
+        resp = self.session.get(url, timeout=self._timeout)
 
         return self.json(resp)
 

@@ -619,7 +619,7 @@ def test_zmon_update_grafana_dashboard(monkeypatch, g, result):
         check = zmon.update_grafana_dashboard(g)
         assert check == result
 
-        post.assert_called_with(zmon.endpoint(client.GRAFANA, trailing_slash=False), json=json.dumps(g), timeout=DEFAULT_TIMEOUT)
+        post.assert_called_with(zmon.endpoint(client.GRAFANA), json=json.dumps(g), timeout=DEFAULT_TIMEOUT)
 
 
 @pytest.mark.parametrize('d,result', [

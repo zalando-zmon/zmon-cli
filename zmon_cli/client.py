@@ -824,8 +824,8 @@ class Zmon:
 
         if 'uid' not in grafana_dashboard['dashboard']:
             current_span.set_tag('error', True)
-            current_span.log_kv({'exception': 'Grafana dashboard must have "uid". Use latest Grafana dashboard format.'})
-            raise ZmonArgumentError('Grafana dashboard must have "uid". Hint: Use latest Grafana dashboard format.')
+            current_span.log_kv({'exception': 'Grafana dashboard must have "uid". Use Grafana6 dashboard format.'})
+            raise ZmonArgumentError('Grafana dashboard must have "uid". Hint: Use Grafana6 dashboard format.')
 
         elif 'title' not in grafana_dashboard['dashboard']:
             current_span.set_tag('error', True)

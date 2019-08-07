@@ -789,19 +789,19 @@ class Zmon:
 
     @trace(pass_span=True)
     @logged
-    def get_grafana_dashboard(self, grafana_dashboard_id: str, **kwargs) -> dict:
+    def get_grafana_dashboard(self, grafana_dashboard_uid: str, **kwargs) -> dict:
         """
         Retrieve Grafana dashboard.
 
-        :param grafana_dashboard_id: Grafana dashboard ID / UID (depending on Grafana version).
-        :type grafana_dashboard_id: str
+        :param grafana_dashboard_uid: Grafana dashboard UID.
+        :type grafana_dashboard_uid: str
 
         :return: Grafana dashboard dict.
         :rtype: dict
         """
         current_span = extract_span_from_kwargs(**kwargs)
-        current_span.set_tag('grafana_dashboard_id', grafana_dashboard_id)
-        url = self.endpoint(GRAFANA, grafana_dashboard_id, trailing_slash=False)
+        current_span.set_tag('grafana_dashboard_uid', grafana_dashboard_uid)
+        url = self.endpoint(GRAFANA, grafana_dashboard_uid, trailing_slash=False)
         resp = self.session.get(url, timeout=self._timeout)
 
         return self.json(resp)
@@ -812,7 +812,7 @@ class Zmon:
         """
         Update existing Grafana dashboard.
 
-        Atrributes ``id`` and ``title`` are required.
+        Atrributes ``uid`` and ``title`` are required.
 
         :param grafana_dashboard: Grafana dashboard dict.
         :type grafana_dashboard: dict
@@ -822,17 +822,20 @@ class Zmon:
         """
         current_span = extract_span_from_kwargs(**kwargs)
 
-        if 'id' not in grafana_dashboard['dashboard']:
+        if 'uid' not in grafana_dashboard['dashboard']:
             current_span.set_tag('error', True)
-            current_span.log_kv({'exception': 'Grafana dashboard must have "id"'})
-            raise ZmonArgumentError('Grafana dashboard must have "id"')
+            current_span.log_kv({'exception': 'Grafana dashboard must have "uid". Use latest Grafana dashboard format.'})
+            raise ZmonArgumentError('Grafana dashboard must have "uid". Hint: Use latest Grafana dashboard format.')
 
         elif 'title' not in grafana_dashboard['dashboard']:
             current_span.set_tag('error', True)
             current_span.log_kv({'exception': 'Grafana dashboard must have "title"'})
             raise ZmonArgumentError('Grafana dashboard must have "title"')
 
-        current_span.set_tag('grafana_dashboard_id', grafana_dashboard['dashboard']['id'])
+        current_span.set_tag('grafana_dashboard_uid', grafana_dashboard['dashboard']['uid'])
+
+        if 'id' in grafana_dashboard['dashboard'] and grafana_dashboard['dashboard']['id'] is not None:
+            current_span.set_tag('grafana_dashboard_id', grafana_dashboard['dashboard']['id'])
 
         resp = self.session.post(self.endpoint(GRAFANA), json=json.dumps(grafana_dashboard), timeout=self._timeout)
 

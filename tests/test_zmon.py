@@ -588,15 +588,15 @@ def test_zmon_get_grafana_dashboard(monkeypatch):
 
 @pytest.mark.parametrize('g,result', [
     (
-        {'dashboard': {'id': 3434, 'title': 'grafana dash'}},
-        {'dashboard': {'id': 3434, 'title': 'grafana dash'}},
+        {'dashboard': {'uid': 3434, 'title': 'grafana dash'}},
+        {'dashboard': {'uid': 3434, 'title': 'grafana dash'}},
     ),
     (
         {'dashboard': {'title': 'grafana dash'}},
         client.ZmonArgumentError
     ),
     (
-        {'dashboard': {'id': 3434}},
+        {'dashboard': {'uid': 3434}},
         client.ZmonArgumentError
     ),
 ])

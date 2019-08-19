@@ -28,7 +28,7 @@ CHECK_DEF = 'check-definitions'
 DASHBOARD = 'dashboard'
 DOWNTIME = 'downtimes'
 ENTITIES = 'entities'
-GRAFANA = 'grafana2-dashboards'
+GRAFANA = 'visualization/dashboard'
 GROUPS = 'groups'
 MEMBER = 'member'
 PHONE = 'phone'
@@ -39,7 +39,7 @@ TOKENS = 'onetime-tokens'
 ALERT_DETAILS_VIEW_URL = '#/alert-details/'
 CHECK_DEF_VIEW_URL = '#/check-definitions/view/'
 DASHBOARD_VIEW_URL = '#/dashboards/views/'
-GRAFANA_DASHBOARD_URL = 'grafana/dashboard/db/'
+GRAFANA_DASHBOARD_URL = 'visualization/dashboard/'
 TOKEN_LOGIN_URL = 'tv/'
 
 logger = logging.getLogger(__name__)
@@ -255,7 +255,7 @@ class Zmon:
         :rtype: str
         """
         if dashboard.get('id', None):
-            return self.endpoint(GRAFANA_DASHBOARD_URL, dashboard['id'], base_url=self.base_url)
+            return self.endpoint(GRAFANA_DASHBOARD_URL, dashboard['id'], base_url=self.base_url, trailing_slash=False)
         return ""
 
     @logged
@@ -789,19 +789,20 @@ class Zmon:
 
     @trace(pass_span=True)
     @logged
-    def get_grafana_dashboard(self, grafana_dashboard_id: str, **kwargs) -> dict:
+    def get_grafana_dashboard(self, grafana_dashboard_uid: str, **kwargs) -> dict:
         """
         Retrieve Grafana dashboard.
 
-        :param grafana_dashboard_id: Grafana dashboard ID.
-        :type grafana_dashboard_id: str
+        :param grafana_dashboard_uid: Grafana dashboard UID.
+        :type grafana_dashboard_uid: str
 
         :return: Grafana dashboard dict.
         :rtype: dict
         """
         current_span = extract_span_from_kwargs(**kwargs)
-        current_span.set_tag('grafana_dashboard_id', grafana_dashboard_id)
-        resp = self.session.get(self.endpoint(GRAFANA, grafana_dashboard_id), timeout=self._timeout)
+        current_span.set_tag('grafana_dashboard_uid', grafana_dashboard_uid)
+        url = self.endpoint(GRAFANA, grafana_dashboard_uid, trailing_slash=False)
+        resp = self.session.get(url, timeout=self._timeout)
 
         return self.json(resp)
 
@@ -811,7 +812,7 @@ class Zmon:
         """
         Update existing Grafana dashboard.
 
-        Atrributes ``id`` and ``title`` are required.
+        Atrributes ``uid`` and ``title`` are required.
 
         :param grafana_dashboard: Grafana dashboard dict.
         :type grafana_dashboard: dict
@@ -821,19 +822,22 @@ class Zmon:
         """
         current_span = extract_span_from_kwargs(**kwargs)
 
-        if 'id' not in grafana_dashboard['dashboard']:
+        if 'uid' not in grafana_dashboard['dashboard']:
             current_span.set_tag('error', True)
-            current_span.log_kv({'exception': 'Grafana dashboard must have "id"'})
-            raise ZmonArgumentError('Grafana dashboard must have "id"')
+            current_span.log_kv({'exception': 'Grafana dashboard must have "uid". Use Grafana6 dashboard format.'})
+            raise ZmonArgumentError('Grafana dashboard must have "uid". Hint: Use Grafana6 dashboard format.')
 
         elif 'title' not in grafana_dashboard['dashboard']:
             current_span.set_tag('error', True)
             current_span.log_kv({'exception': 'Grafana dashboard must have "title"'})
             raise ZmonArgumentError('Grafana dashboard must have "title"')
 
-        current_span.set_tag('grafana_dashboard_id', grafana_dashboard['dashboard']['id'])
+        current_span.set_tag('grafana_dashboard_uid', grafana_dashboard['dashboard']['uid'])
 
-        resp = self.session.post(self.endpoint(GRAFANA), json=grafana_dashboard, timeout=self._timeout)
+        if 'id' in grafana_dashboard['dashboard'] and grafana_dashboard['dashboard']['id'] is not None:
+            current_span.set_tag('grafana_dashboard_id', grafana_dashboard['dashboard']['id'])
+
+        resp = self.session.post(self.endpoint(GRAFANA), json=json.dumps(grafana_dashboard), timeout=self._timeout)
 
         return self.json(resp)
 
